@@ -11,4 +11,14 @@ public static class MathUtils
     {
         return Math.Abs(a - b) < Epsilon;
     }
+
+    /// <summary>
+    /// 将角度转换为radius
+    /// </summary>
+    /// <param name="degree"></param>
+    /// <returns></returns>
+    public static double DegToRad(double degree)
+    {
+        return degree / 180 * Math.PI;
+    }
 }

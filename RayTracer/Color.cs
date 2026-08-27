@@ -5,7 +5,8 @@ public class Color
     public double Red { get; }
     public double Green { get; }
     public double Blue { get; }
-
+    
+    public Color() {}
     public Color(double red, double green, double blue)
     {
         Red = red;

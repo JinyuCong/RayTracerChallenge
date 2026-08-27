@@ -2,7 +2,7 @@
 
 namespace RayTracerChallenge.RayTracer;
 
-public struct Tuple4
+public class Tuple4
 {
     public double X { get; set; }
     public double Y { get; set; }
@@ -29,12 +29,12 @@ public struct Tuple4
         return MathUtils.AlmostEqual(W, 0.0);
     }
 
-    public Tuple4 Point(double x, double y, double z)
+    public static Tuple4 Point(double x, double y, double z)
     {
         return new Tuple4(x, y, z, 1.0);
     }
 
-    public Tuple4 Vector(double x, double y, double z)
+    public static Tuple4 Vector(double x, double y, double z)
     {
         return new Tuple4(x, y, z, 0.0);
     }
@@ -92,7 +92,7 @@ public struct Tuple4
     }
     
     // 重写 Equals(object) —— 消除警告
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is Tuple4 other && Equals(other);
     }
@@ -134,6 +134,16 @@ public struct Tuple4
             X * other.Y - Y * other.X,
             0
         );
+    }
+
+    /// <summary>
+    /// 求入射向量关于法线的反射向量
+    /// </summary>
+    /// <param name="normal">法线</param>
+    /// <returns>反射向量</returns>
+    public Tuple4 Reflect(Tuple4 normal)
+    {
+        return this - normal * 2 * Dot(normal);
     }
 
     public override string ToString()

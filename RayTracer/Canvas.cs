@@ -1,5 +1,6 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace RayTracerChallenge.RayTracer;
 
@@ -9,6 +10,11 @@ public class Canvas
     public int Height { get; }
     public Color[,] C { get; set; }
 
+    public Color this[int x, int y]
+    {
+        get => C[x, y];
+    } 
+    
     public Canvas(int w, int h)
     {
         Width = w;
@@ -95,5 +101,24 @@ public class Canvas
     {
         string ppmContent = CanvasToPpm();
         File.WriteAllText(path, ppmContent);
+    }
+
+    public void SavePng(string path)
+    {
+        using var image = new Image<Rgb24>(Width, Height);
+    
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                var c = this[x, y];
+                byte r = (byte)Math.Clamp((int)Math.Round(c.Red * 255), 0, 255);
+                byte g = (byte)Math.Clamp((int)Math.Round(c.Green * 255), 0, 255);
+                byte b = (byte)Math.Clamp((int)Math.Round(c.Blue * 255), 0, 255);
+                image[x, y] = new Rgb24(r, g, b);
+            }
+        }
+    
+        image.Save(path); // 根据扩展名自动判断格式，比如 output.png
     }
 }

@@ -1,10 +1,11 @@
-﻿using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using System.Text;
 using RayTracerChallenge.MyExceptions;
 
 namespace RayTracerChallenge.RayTracer;
 
+/// <summary>
+/// 定义矩阵类
+/// </summary>
 public class Matrix
 {
     private readonly double[,] _values;
@@ -137,7 +138,7 @@ public class Matrix
     }
     
     // 重写 Equals(object) —— 消除警告
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is Matrix other && Equals(other);
     }
