@@ -115,4 +115,31 @@ public static class Transformations
         };
         return new Matrix(t);
     }
+
+    /// <summary>
+    /// 相机变换矩阵，将世界中的物体移到相机前面
+    /// </summary>
+    /// <param name="from">相机所在点</param>
+    /// <param name="to">相机朝向的点</param>
+    /// <param name="up">一个模糊的相机的“上方”</param>
+    /// <returns></returns>
+    public static Matrix ViewTransformation(Tuple4 from, Tuple4 to, Tuple4 up)
+    {
+        Tuple4 forward = (to - from).Normalize();  //  相机朝向向量
+        Tuple4 upn = up.Normalize();  // 模糊的相机的“上”方向
+        Tuple4 left = forward.Cross(upn);  // 和模糊“上”方向和朝向方向正交的左
+        Tuple4 trueUp = left.Cross(forward);  // 用左和朝向修正上方向
+
+        // 转动方向矩阵
+        Matrix orientation = new Matrix(new [,]
+        {
+            { left.X, left.Y, left.Z, 0 },
+            { trueUp.X, trueUp.Y, trueUp.Z, 0 },
+            { -forward.X, -forward.Y, -forward.Z, 0 },
+            { 0, 0, 0, 1 }
+        });
+        
+        // 物体平移到相机坐标系之后再进行转动
+        return orientation * Translation(-from.X, -from.Y, -from.Z);
+    }
 }

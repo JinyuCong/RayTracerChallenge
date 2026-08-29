@@ -3,9 +3,9 @@
 public class Material
 {
     public Color Color { get; set; }  // 材质颜色
-    public double Ambient { get; set; }  // 环境光
-    public double Diffuse { get; set; }  // 漫反射
-    public double Specular { get; set; }  // 镜面反射
+    public double Ambient { get; set; }  // 环境光强度
+    public double Diffuse { get; set; }  // 漫反射强度
+    public double Specular { get; set; }  // 镜面反射强度
     public double Shininess { get; set; }  // 光泽度
 
     public Material(

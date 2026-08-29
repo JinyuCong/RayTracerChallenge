@@ -84,9 +84,9 @@ public static class Challenges
 
         Canvas canvas = new Canvas(canvasPixels, canvasPixels);
         Color color = new Color(1, 0, 0);
-        Sphere shape = new Sphere();
+        Sphere sphere = Sphere.Default();
 
-        shape.Transform = Transformations.Translation(0.3, -0.4, 0) * Transformations.Scaling(0.5, 1, 1);
+        sphere.Transform = Transformations.Translation(0.3, -0.4, 0) * Transformations.Scaling(0.5, 1, 1);
         
         for (int y = 0; y < canvasPixels; y++)
         {
@@ -97,9 +97,9 @@ public static class Challenges
                 var position = Tuple4.Point(worldX, worldY, wallZ);
 
                 Ray r = new Ray(rayOrigin, (position - rayOrigin).Normalize());
-                Intersection[] xs = shape.Intersect(r);
+                Intersection[] xs = sphere.Intersect(r);
 
-                Intersection? intersection = shape.Hit(xs);
+                Intersection? intersection = sphere.Hit(xs);
                 if (intersection is not null)
                 {
                     canvas.WritePixel(x, y, color);
@@ -112,8 +112,8 @@ public static class Challenges
     public static void LightAndShadingSphere()
     {
         // 初始化球
-        Sphere sphere = new Sphere();
-        sphere.Material.Color = new Color(1, 0.2, 1);
+        Sphere shape = Sphere.Default();
+        shape.Material.Color = new Color(1, 0.2, 1);
 
         // 初始化光源
         var lightPosition = Tuple4.Point(-10, 10, -10);
@@ -141,15 +141,15 @@ public static class Challenges
                 var position = Tuple4.Point(worldX, worldY, wallZ);  // 这个像素在世界中的坐标
                 var ray = new Ray(rayOrigin, (position - rayOrigin).Normalize());  // 这个像素到视线原点的光线
 
-                Intersection[] xs = sphere.Intersect(ray);
-                Intersection? intersection = sphere.Hit(xs);
+                Intersection[] xs = shape.Intersect(ray);
+                Intersection? intersection = shape.Hit(xs);
                 if (intersection is not null)
                 {
                     var hitPoint = ray.Position(intersection.T);
-                    var normal = sphere.NormalAt(hitPoint);
+                    var normal = shape.NormalAt(hitPoint);
                     var eyeV = -ray.Direction;
 
-                    var color = World.Lighting(sphere.Material, light, hitPoint, eyeV, normal);
+                    var color = World.Lighting(shape.Material, light, hitPoint, eyeV, normal);
                     canvas.WritePixel(x, y, color);
                 }
             }

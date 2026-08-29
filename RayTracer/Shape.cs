@@ -1,16 +1,34 @@
 ﻿namespace RayTracerChallenge.RayTracer;
 
-public class Sphere
+public abstract class Shape
+{
+    public Matrix Transform { get; set; } = Matrix.Identity(4);  // 对物体的变换（应用中其实是对投射到物体上的光线进行逆变换）
+    public Material Material { get; set; } = new Material();  // 默认材质
+
+    public abstract Intersection[] Intersect(Ray ray);
+    public abstract Tuple4 NormalAt(Tuple4 worldPoint);
+}
+
+
+public class Sphere : Shape
 {
     public Tuple4 Center { get; }  // 球心坐标
     public double Radius { get; }  // 球的半径
-    public Material Material { get; set; } = new Material();  // 默认材质
     
-    public Matrix Transform { get; set; } = Matrix.Identity(4);  /// 对球的变换（应用中其实是对投射到球上的光线进行逆变换）
-    public Sphere(Tuple4? center = null, double radius = 1)
+    /// <summary>
+    /// 初始化球
+    /// </summary>
+    /// <param name="center">球的中心点（Tuple4）</param>
+    /// <param name="radius">球的半径（double）</param>
+    public Sphere(Tuple4 center, double radius)
     {
-        Center = center ?? Tuple4.Point(0, 0, 0);
+        Center = center;
         Radius = radius;
+    }
+
+    public static Sphere Default()
+    {
+        return new Sphere(Tuple4.Point(0, 0, 0), 1);
     }
 
     /// <summary>
@@ -18,7 +36,7 @@ public class Sphere
     /// </summary>
     /// <param name="ray">光线类</param>
     /// <returns>包含Intersection类的数组，长度可为0，1，2</returns>
-    public Intersection[] Intersect(Ray ray)
+    public override Intersection[] Intersect(Ray ray)
     {
         Ray ray2 = ray.Transform(Transform.Inverse());  // 对物体做变换相当于对光线做逆变换（逆矩阵乘光线的原点和方向）
         
@@ -39,6 +57,7 @@ public class Sphere
 
         return new[] { new Intersection(t1, this), new Intersection(t2, this) };
     }
+    
     /// <summary>
     /// 从光线与物体的交点中取出和物体的第一个交点的t值
     /// </summary>
@@ -66,7 +85,7 @@ public class Sphere
     /// </summary>
     /// <param name="worldPoint">空间中任意一点</param>
     /// <returns>归一化法向量</returns>
-    public Tuple4 NormalAt(Tuple4 worldPoint)
+    public override Tuple4 NormalAt(Tuple4 worldPoint)
     {
         var objectPoint = Transform.Inverse() * worldPoint;  // 世界坐标系的点转换为物体坐标系点
         var objectNormal = objectPoint - Center;  // 物体坐标系点减去物体坐标系球中心

@@ -34,6 +34,18 @@ public class Color
         return new Color(a.Red * b.Red, a.Green * b.Green, a.Blue * b.Blue);
     }
 
+    public static bool operator ==(Color a, Color b)
+    {
+        return MathUtils.AlmostEqual(a.Red, b.Red) &&
+               MathUtils.AlmostEqual(a.Green, b.Green) &&
+               MathUtils.AlmostEqual(a.Blue, b.Blue);
+    }
+    
+    public static bool operator !=(Color a, Color b)
+    {
+        return !(a == b);
+    }
+    
     public override string ToString()
     {
         return $"(r:{Red}, g:{Green}, b:{Blue})";
