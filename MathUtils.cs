@@ -1,7 +1,6 @@
-﻿using RayTracerChallenge.MyExceptions;
+﻿namespace RayTracerChallenge;
 
-namespace RayTracerChallenge;
-using RayTracerChallenge.RayTracer;
+using RayTracer;
 
 public static class MathUtils
 {

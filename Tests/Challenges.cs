@@ -1,8 +1,30 @@
-﻿using System.Diagnostics.Tracing;
-
-namespace RayTracerChallenge.Tests;
+﻿namespace RayTracerChallenge.Tests;
 
 using RayTracer;
+
+public class Environment
+{
+    public Tuple4 Gravity { get; set; }
+    public Tuple4 Wind { get; set; }
+
+    public Environment(Tuple4 gravity, Tuple4 wind)
+    {
+        Gravity = gravity;
+        Wind = wind;
+    }
+}
+
+public class Projectile
+{
+    public Tuple4 Position { get; set; }
+    public Tuple4 Velocity { get; set; }
+
+    public Projectile(Tuple4 position, Tuple4 velocity)
+    {
+        Position = position;
+        Velocity = velocity;
+    }
+}
 
 public static class Challenges
 {
@@ -155,5 +177,71 @@ public static class Challenges
             }
         }
         canvas.SavePng("./light_and_shading_sphere.png");
+    }
+
+    public static void MakingAScene()
+    {
+        // 地面（拍扁的球）
+        var floor = Sphere.Default();
+        floor.Transform = Transformations.Scaling(10, 0.01, 10);
+        floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0);
+        
+        // 左边的墙
+        var leftWall = Sphere.Default();
+        leftWall.Transform = Transformations.Translation(0, 0, 5) *
+                             Transformations.RotationY(-45) *
+                             Transformations.RotationX(90) *
+                             Transformations.Scaling(10, 0.01, 10);
+        leftWall.Material = floor.Material;
+
+        // 右边的墙
+        var rightWall = Sphere.Default();
+        rightWall.Transform = Transformations.Translation(0, 0, 5) *
+                              Transformations.RotationY(45) *
+                              Transformations.RotationX(90) *
+                              Transformations.Scaling(10, 0.01, 10);
+        rightWall.Material = floor.Material;
+
+        // 中间的球
+        var middle = Sphere.Default();
+        middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
+        middle.Material = new Material(
+            color: new Color(0.1, 1, 0.5),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 右边的球
+        var right = Sphere.Default();
+        right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
+                          Transformations.Scaling(0.5, 0.5, 0.5);
+        right.Material = new Material(
+            color: new Color(0.5, 1, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 左边的球
+        var left = Sphere.Default();
+        left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
+                         Transformations.Scaling(0.33, 0.33, 0.33);
+        left.Material = new Material(
+            color: new Color(1, 0.8, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 构建场景
+        var shapes = new List<Shape> { floor, leftWall, rightWall, left, middle, right };
+        
+        var camera = new Camera(1000, 500, Math.PI / 3);
+        var cameraTransform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 1.5, -5), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        camera.Transform = cameraTransform;
+        
+        var light = new Light(Tuple4.Point(-10, 10, 10), new Color(1, 1, 1));
+        
+        var world = new World(light, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./making_a_scene.png");
     }
 }

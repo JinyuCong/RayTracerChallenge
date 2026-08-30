@@ -4,11 +4,13 @@ public class World
 {
     public Light Light { get; set; }
     public List<Shape> Shapes { get; set; }
+    public Camera Camera { get; set; }
     
-    public World(Light light, List<Shape> shapes)
+    public World(Light light, List<Shape> shapes, Camera camera)
     {
         Light = light;
         Shapes = shapes;
+        Camera = camera;
     }
 
     /// <summary>
@@ -17,11 +19,13 @@ public class World
     /// <returns>有两个球s1和s2的默认世界</returns>
     public static World Default()
     {
+        // 光源
         var light = new Light(
             Tuple4.Point(-10, 10, -10), 
             new Color(1, 1, 1)
             );
         
+        // 物体
         var s1 =  Sphere.Default();
         s1.Material = new Material(
             color:new Color(0.8, 1.0, 0.6), 
@@ -30,7 +34,14 @@ public class World
         
         var s2 = new Sphere(Tuple4.Point(0, 0, 0),0.5);
         
-        return new World(light, new List<Shape> { s1, s2 });
+        //相机
+        var camera = new Camera(11, 11, Math.PI / 2);
+        var from = Tuple4.Point(0, 0, -5);
+        var to = Tuple4.Point(0, 0, 0);
+        var up = Tuple4.Vector(0, 1, 0);
+        camera.Transform = Transformations.ViewTransformation(from, to, up);
+        
+        return new World(light, new List<Shape> { s1, s2 }, camera);
     }
 
     /// <summary>
@@ -152,5 +163,22 @@ public class World
         }
 
         return ambient + diffuse + specular;
+    }
+
+    public Canvas Render()
+    {
+        Canvas canvas = new Canvas(Camera.HSize, Camera.VSize);
+
+        Parallel.For(0, Camera.VSize, y => 
+        {
+            for (int x = 0; x < Camera.HSize; x++)
+            {
+                Ray ray = Camera.RayForPixel(x, y);
+                Color color = ColorAt(ray);
+                canvas.WritePixel(x, y, color);
+            }
+        });
+
+        return canvas;
     }
 }

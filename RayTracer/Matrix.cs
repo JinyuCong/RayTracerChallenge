@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using RayTracerChallenge.MyExceptions;
+using RayTracerChallenge.Exceptions;
 
 namespace RayTracerChallenge.RayTracer;
 

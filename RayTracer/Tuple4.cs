@@ -1,6 +1,6 @@
-﻿using RayTracerChallenge.MyExceptions;
+﻿namespace RayTracerChallenge.RayTracer;
 
-namespace RayTracerChallenge.RayTracer;
+using Exceptions;
 
 public class Tuple4
 {

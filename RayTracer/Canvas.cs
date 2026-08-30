@@ -8,7 +8,7 @@ public class Canvas
 {
     public int Width { get; }
     public int Height { get; }
-    public Color[,] C { get; set; }
+    private Color[,] C { get; set; }
 
     public Color this[int x, int y]
     {

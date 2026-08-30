@@ -1,4 +1,4 @@
-﻿namespace RayTracerChallenge.MyExceptions;
+﻿namespace RayTracerChallenge.Exceptions;
 
 public class MatrixCannotMultiplyException: Exception
 {
