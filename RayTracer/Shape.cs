@@ -5,7 +5,7 @@ public abstract class Shape
     public Matrix Transform { get; set; } = Matrix.Identity(4);  // 对物体的变换（应用中其实是对投射到物体上的光线进行逆变换）
     public Material Material { get; set; } = new Material();  // 默认材质
 
-    public abstract Intersection[] Intersect(Ray ray);
+    public abstract List<Intersection> Intersect(Ray ray);
     public abstract Tuple4 NormalAt(Tuple4 worldPoint);
 }
 
@@ -36,7 +36,7 @@ public class Sphere : Shape
     /// </summary>
     /// <param name="ray">光线类</param>
     /// <returns>包含Intersection类的数组，长度可为0，1，2</returns>
-    public override Intersection[] Intersect(Ray ray)
+    public override List<Intersection> Intersect(Ray ray)
     {
         Ray ray2 = ray.Transform(Transform.Inverse());  // 对物体做变换相当于对光线做逆变换（逆矩阵乘光线的原点和方向）
         
@@ -49,13 +49,13 @@ public class Sphere : Shape
         double discriminant = b * b - 4 * a * c;
         if (discriminant < 0)
         {
-            return Array.Empty<Intersection>();
+            return new List<Intersection> {};
         }
 
         double t1 = (-b - Math.Sqrt(discriminant)) / (2 * a);
         double t2 = (-b + Math.Sqrt(discriminant)) / (2 * a);
 
-        return new[] { new Intersection(t1, this), new Intersection(t2, this) };
+        return new List<Intersection> { new Intersection(t1, this), new Intersection(t2, this) };
     }
     
     /// <summary>
@@ -63,7 +63,7 @@ public class Sphere : Shape
     /// </summary>
     /// <param name="intersections">包含 Intersection 类的数组，为光线和物体的所有潜在交点</param>
     /// <returns>Intersection 类，包含光线和物体第一个交点的 t 值和物体本身</returns>
-    public Intersection? Hit(Intersection[] intersections)
+    public Intersection? Hit(List<Intersection> intersections)
     {
         Intersection? result = null;
         

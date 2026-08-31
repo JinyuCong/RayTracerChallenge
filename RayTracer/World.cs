@@ -2,13 +2,13 @@
 
 public class World
 {
-    public Light Light { get; set; }
+    public List<Light> Lights { get; set; }
     public List<Shape> Shapes { get; set; }
     public Camera Camera { get; set; }
     
-    public World(Light light, List<Shape> shapes, Camera camera)
+    public World(List<Light> lights, List<Shape> shapes, Camera camera)
     {
-        Light = light;
+        Lights = lights;
         Shapes = shapes;
         Camera = camera;
     }
@@ -41,7 +41,7 @@ public class World
         var up = Tuple4.Vector(0, 1, 0);
         camera.Transform = Transformations.ViewTransformation(from, to, up);
         
-        return new World(light, new List<Shape> { s1, s2 }, camera);
+        return new World(new List<Light> { light }, new List<Shape> { s1, s2 }, camera);
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public class World
         
         foreach (var shape in Shapes)
         {
-            Intersection[] localIntersections = shape.Intersect(ray);
+            List<Intersection> localIntersections = shape.Intersect(ray);
             foreach (var intersection in localIntersections)
             {
                 xs.Add(intersection);
@@ -67,20 +67,126 @@ public class World
     }
 
     /// <summary>
+    /// 拿所有和世界的交点中第一个和世界的交点
+    /// </summary>
+    /// <param name="xs">所有交点（已经按交点的t值从小到大排好）</param>
+    /// <returns>第一个交点</returns>
+    public Intersection? HitWorld(List<Intersection> xs)
+    {
+        xs.RemoveAll(i => i.T < 0);  // 删除所有t小于0的交点（在光线背后不算）
+        
+        if (xs.Count == 0)
+        {
+            return null;  // 无交点
+        }
+        
+        return xs[0];  // 返回列表中第一个就是第一个交点
+    }
+    
+    /// <summary>
+    /// Phong 光照模型
+    /// </summary>
+    /// <param name="material">材质(Material)</param>
+    /// <param name="lights">所有光源(List[Light])</param>
+    /// <param name="point">光线接触到的点(Tuple4)</param>
+    /// <param name="eyeV">视线向量(Tuple4)</param>
+    /// <param name="normalV">点对应的法向量(Tuple4)</param>
+    /// <param name="shadowFlags">每个光源对应一个"是否被遮挡"的标记</param>
+    /// <returns></returns>
+    public static Color Lighting(
+        Material material, 
+        List<Light> lights, 
+        Tuple4 point, 
+        Tuple4 eyeV, 
+        Tuple4 normalV,
+        List<bool> shadowFlags)
+    {
+        Color black = new Color(0, 0, 0);
+        Color totalDiffuseSpecular = new Color(0, 0, 0);
+
+        Color ambient = material.Color * material.Ambient;
+
+        for (int i = 0; i < lights.Count; i++)
+        {
+            var light = lights[i];
+            bool inShadow = shadowFlags[i];
+
+            if (inShadow)
+            {
+                continue;
+            }
+            
+            // 结合材质颜色和光源颜色
+            Color effectiveColor = material.Color * light.Intensity;
+
+            // 找到交点到光源的向量
+            Tuple4 lightV = (light.Position - point).Normalize();
+
+            // 入射光线和表面法向量的余弦相似度
+            double lightDotNormal = lightV.Dot(normalV);
+            
+            Color diffuse;
+            Color specular;
+        
+            // 相似度为负表示法向量和入射光方向相反（这个面不能被光照到），颜色为黑色
+            if (lightDotNormal < 0)
+            {
+                diffuse = black;
+                specular = black;
+            }
+            else  // 相似度不为负的情况
+            {
+                // 表面颜色乘上散射强度和余弦相似度，相似度越大表明这个面越靠近光源
+                diffuse = effectiveColor * material.Diffuse * lightDotNormal;
+
+                // reflect_dot_eye represents the cosine of the angle between the
+                // reflection vector and the eye vector. A negative number means the
+                // light reflects away from the eye.
+                Tuple4 reflectV = (-lightV).Reflect(normalV);
+                double reflectDotEye = reflectV.Dot(eyeV);
+
+                if (reflectDotEye <= 0)
+                {
+                    specular = black;
+                }
+                else
+                {
+                    // compute the specular contribution
+                    double factor = Math.Pow(reflectDotEye, material.Shininess);
+                    specular = light.Intensity * material.Specular * factor;
+                }
+            }
+
+            totalDiffuseSpecular += diffuse + specular;
+        }
+        
+        return ambient + totalDiffuseSpecular;
+    }
+    
+    /// <summary>
     /// 通过对一个交点的计算得到这个点的颜色
     /// </summary>
     /// <param name="comps">Computation</param>
     /// <returns>点的颜色(Color)</returns>
     public Color ShadeHit(Computation comps)
     {
+        List<bool> shadowFlags = new List<bool> {};  // 这个点对于世界中所有光源是否处在阴影中的列表
+
+        foreach (var light in Lights)
+        {
+            bool inShadow = IsShadowed(light, comps.OverPoint);
+            shadowFlags.Add(inShadow);
+        }
+            
         return Lighting(
             comps.Object.Material,
-            this.Light,
-            comps.Point,
+            this.Lights,
+            comps.OverPoint,
             comps.EyeV,
-            comps.NormalV);
+            comps.NormalV,
+            shadowFlags);
     }
-
+    
     /// <summary>
     /// 通过一个光线计算光线打到的世界上的一个点的颜色
     /// </summary>
@@ -89,82 +195,48 @@ public class World
     public Color ColorAt(Ray r)
     {
         var xs = IntersectWorld(r);  // 已经按交点的t值从小到大排好的交点列表
+
+        Intersection? hitPoint = HitWorld(xs);
         
-        if (xs.Count == 0)
+        if (hitPoint is null)
         {
             return new Color(0, 0, 0);  // 无交点返回黑色
         }
-
-        xs.RemoveAll(i => i.T < 0);  // 删除所有t小于0的交点
-        var compsHit = xs[0].PrepareComputations(r);
-        var c = ShadeHit(compsHit);
-        return c;
+        
+        var compsHit = hitPoint.PrepareComputations(r);
+        return ShadeHit(compsHit);
     }
-    
+
     /// <summary>
-    /// Phong 光照模型
+    /// 用于判断世界中的一个点是否被物体遮挡（在阴影中）
     /// </summary>
-    /// <param name="material">材质(Material)</param>
-    /// <param name="light">光源(Light)</param>
-    /// <param name="point">光线接触到的点(Tuple4)</param>
-    /// <param name="eyeV">视线向量(Tuple4)</param>
-    /// <param name="normalV">点对应的法向量(Tuple4)</param>
-    /// <returns></returns>
-    public static Color Lighting(
-        Material material, 
-        Light light, 
-        Tuple4 point, 
-        Tuple4 eyeV, 
-        Tuple4 normalV)
+    /// <param name="light">世界中的一个光源</param>
+    /// <param name="point">世界中的一个点</param>
+    /// <returns>在阴影中 — true，不在阴影中 — false</returns>
+    public bool IsShadowed(Light light, Tuple4 point)
     {
-        Color black = new Color(0, 0, 0);
-        Color diffuse;
-        Color specular;
+        // 光线向量
+        Tuple4 v = light.Position - point;
         
-        // 结合材质颜色和光源颜色
-        Color effectiveColor = material.Color * light.Intensity;
-
-        // 找到交点到光源的向量
-        Tuple4 lightV = (light.Position - point).Normalize();
-
-        // 计算环境光对颜色的贡献
-        Color ambient = effectiveColor * material.Ambient;
-
-        // 入射光线和表面法向量的余弦相似度
-        double lightDotNormal = lightV.Dot(normalV);
+        // 光源到这个点的距离
+        double distance = v.Magnitude();
         
-        // 相似度为负表示法向量和入射光方向相反（这个面不能被光照到），颜色为黑色
-        if (lightDotNormal < 0)
-        {
-            diffuse = black;
-            specular = black;
-        }
-        else  // 相似度不为负的情况
-        {
-            // 表面颜色乘上散射强度和余弦相似度，相似度越大表明这个面越靠近光源
-            diffuse = effectiveColor * material.Diffuse * lightDotNormal;
+        // 光线方向为向量归一化
+        Tuple4 direction = v.Normalize();
+        
+        Ray lightRay = new Ray(point, direction);
+        
+        // 计算光线和世界交点
+        List<Intersection> intersections = IntersectWorld(lightRay);
+        Intersection? hit = HitWorld(intersections);
 
-            // reflect_dot_eye represents the cosine of the angle between the
-            // reflection vector and the eye vector. A negative number means the
-            // light reflects away from the eye.
-            Tuple4 reflectV = (-lightV).Reflect(normalV);
-            double reflectDotEye = reflectV.Dot(eyeV);
-
-            if (reflectDotEye <= 0)
-            {
-                specular = black;
-            }
-            else
-            {
-                // compute the specular contribution
-                double factor = Math.Pow(reflectDotEye, material.Shininess);
-                specular = light.Intensity * material.Specular * factor;
-            }
-        }
-
-        return ambient + diffuse + specular;
+        return (hit is not null && hit.T < distance);
     }
 
+    /// <summary>
+    /// 渲染世界
+    /// </summary>
+    /// <returns>画布</returns>
     public Canvas Render()
     {
         Canvas canvas = new Canvas(Camera.HSize, Camera.VSize);

@@ -119,7 +119,7 @@ public static class Challenges
                 var position = Tuple4.Point(worldX, worldY, wallZ);
 
                 Ray r = new Ray(rayOrigin, (position - rayOrigin).Normalize());
-                Intersection[] xs = sphere.Intersect(r);
+                List<Intersection> xs = sphere.Intersect(r);
 
                 Intersection? intersection = sphere.Hit(xs);
                 if (intersection is not null)
@@ -163,7 +163,7 @@ public static class Challenges
                 var position = Tuple4.Point(worldX, worldY, wallZ);  // 这个像素在世界中的坐标
                 var ray = new Ray(rayOrigin, (position - rayOrigin).Normalize());  // 这个像素到视线原点的光线
 
-                Intersection[] xs = shape.Intersect(ray);
+                List<Intersection> xs = shape.Intersect(ray);
                 Intersection? intersection = shape.Hit(xs);
                 if (intersection is not null)
                 {
@@ -171,7 +171,7 @@ public static class Challenges
                     var normal = shape.NormalAt(hitPoint);
                     var eyeV = -ray.Direction;
 
-                    var color = World.Lighting(shape.Material, light, hitPoint, eyeV, normal);
+                    var color = World.Lighting(shape.Material, new List<Light>{ light }, hitPoint, eyeV, normal, new List<bool>());
                     canvas.WritePixel(x, y, color);
                 }
             }
@@ -238,10 +238,81 @@ public static class Challenges
             Tuple4.Vector(0, 1, 0));
         camera.Transform = cameraTransform;
         
-        var light = new Light(Tuple4.Point(-10, 10, 10), new Color(1, 1, 1));
+        var light1 = new Light(Tuple4.Point(-10, 10, -10), new Color(1, 1, 1));
         
-        var world = new World(light, shapes, camera);
+        var world = new World(new List<Light> { light1 }, shapes, camera);
         var canvas = world.Render();
-        canvas.SavePng("./making_a_scene.png");
+        canvas.SavePng("./making_a_scene_with_shadow.png");
+    }
+
+    public static void BarkBark()
+    {
+        // 背景墙（x = 2）
+        var background = Sphere.Default();
+        background.Transform = Transformations.Translation(0, 5, 5) *
+                               Transformations.Scaling(0.01, 50, 50);
+        background.Material = new Material(color: new Color(0.5, 0.5, 0.5), specular: 0);
+
+        // 青色球（画面左侧）
+        var ball1 = Sphere.Default();
+        ball1.Transform = Transformations.Translation(5, 4, 2) *
+                          Transformations.Scaling(1, 1, 1);
+        ball1.Material = new Material(color: new Color(0, 0.9, 0.9), specular: 0.3);
+        
+        // 蓝
+        var ball2 = Sphere.Default();
+        ball2.Transform = Transformations.Translation(5, 5, 3) *
+                          Transformations.Scaling(0.5, 0.7, 1);
+        ball2.Material = new Material(color: new Color(0.1, 0.1, 0.7), specular: 0.3);
+        
+        // 黄
+        var ball3 = Sphere.Default();
+        ball3.Transform = Transformations.Translation(5, 5.9, 3) *
+                          Transformations.RotationX(90) *
+                          Transformations.Scaling(0.2, 0.2, 0.5);
+        ball3.Material = new Material(color: new Color(1, 0.9, 0), specular: 0.3);
+        
+        // 绿
+        var ball4 = Sphere.Default();
+        ball4.Transform = Transformations.Translation(5, 5.7, 4) *
+                          Transformations.RotationX(-30) *
+                          Transformations.Scaling(0.2, 0.2, 0.5);
+        ball4.Material = new Material(color: new Color(0.2, 0.9, 0.3), specular: 0.3);
+        
+        // 白
+        var ball5 = Sphere.Default();
+        ball5.Transform = Transformations.Translation(5, 5.2, 4.3) *
+                          Transformations.RotationX(-20) *
+                          Transformations.Scaling(0.2, 0.2, 0.5);
+        ball5.Material = new Material(color: new Color(1, 1, 1), specular: 0.3);
+        
+        // 红
+        var ball6 = Sphere.Default();
+        ball6.Transform = Transformations.Translation(5, 5, 4.3) *
+                          Transformations.Scaling(0.2, 0.2, 0.5);
+        ball6.Material = new Material(color: new Color(1, 0, 0), specular: 0.3);
+        
+        // 紫
+        // var ball7 = Sphere.Default();
+        // ball7.Transform = Transformations.Translation(5, 5, 4.3) *
+        //                   Transformations.RotationX(20) *
+        //                   Transformations.Scaling(0.2, 0.2, 0.5);
+        // ball7.Material = new Material(color: new Color(1, 0, 1), specular: 0.3);
+
+        // 光源放到相机这一侧
+        var light = new Light(Tuple4.Point(9, 3.5, 0), new Color(1, 1, 1));
+
+        var camera = new Camera(1000, 500, Math.PI / 2.5);
+        camera.Transform = Transformations.ViewTransformation(
+            Tuple4.Point(13, 5, 5),
+            Tuple4.Point(2, 5, 5),
+            Tuple4.Vector(0, 1, 0));
+
+        var w = new World(
+            new List<Light> { light },
+            new List<Shape> { background, ball1, ball2, ball3, ball4, ball5, ball6 },
+            camera);
+
+        w.Render().SavePng("./bark_bark.png");
     }
 }

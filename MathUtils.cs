@@ -4,7 +4,7 @@ using RayTracer;
 
 public static class MathUtils
 {
-    private const double Epsilon = 0.00001;
+    public const double Epsilon = 0.00001;
     
     public static bool AlmostEqual(double a, double b)
     {
