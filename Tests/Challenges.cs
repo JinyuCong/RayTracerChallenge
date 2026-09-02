@@ -171,7 +171,7 @@ public static class Challenges
                     var normal = shape.NormalAt(hitPoint);
                     var eyeV = -ray.Direction;
 
-                    var color = World.Lighting(shape.Material, new List<Light>{ light }, hitPoint, eyeV, normal, new List<bool>());
+                    var color = World.Lighting(shape.Material, shape, new List<Light>{ light }, hitPoint, eyeV, normal, new List<bool>());
                     canvas.WritePixel(x, y, color);
                 }
             }
@@ -291,15 +291,8 @@ public static class Challenges
         ball6.Transform = Transformations.Translation(5, 5, 4.3) *
                           Transformations.Scaling(0.2, 0.2, 0.5);
         ball6.Material = new Material(color: new Color(1, 0, 0), specular: 0.3);
-        
-        // 紫
-        // var ball7 = Sphere.Default();
-        // ball7.Transform = Transformations.Translation(5, 5, 4.3) *
-        //                   Transformations.RotationX(20) *
-        //                   Transformations.Scaling(0.2, 0.2, 0.5);
-        // ball7.Material = new Material(color: new Color(1, 0, 1), specular: 0.3);
 
-        // 光源放到相机这一侧
+        // 光源
         var light = new Light(Tuple4.Point(9, 3.5, 0), new Color(1, 1, 1));
 
         var camera = new Camera(1000, 500, Math.PI / 2.5);
@@ -314,5 +307,137 @@ public static class Challenges
             camera);
 
         w.Render().SavePng("./bark_bark.png");
+    }
+    
+    public static void MakingASceneWithPlane()
+    {
+        var pattern = new RadialGradientPattern(new Color(1, 0, 0), new Color(0, 0, 1));
+        pattern.Transform = Transformations.Scaling(0.1, 0.1, 0.1);
+        
+        // 地面（平面）
+        var floor = new Plane();
+        floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0, pattern: pattern);
+        
+        // 中间的墙
+        var middleWall = new Plane();
+        middleWall.Transform = Transformations.Translation(0, 0, 1) *
+                               Transformations.RotationX(-90);
+        middleWall.Material = floor.Material;
+        
+        // 左边的墙
+        var leftWall = new Plane();
+        leftWall.Transform = Transformations.Translation(0, 0, 2) *
+                             Transformations.RotationY(-30) *
+                             Transformations.RotationX(-90);
+        leftWall.Material = floor.Material;
+        
+        // 右边的墙
+        var rightWall = new Plane();
+        rightWall.Transform = Transformations.Translation(0, 0, 2) *
+                              Transformations.RotationY(30) *
+                              Transformations.RotationX(-90);
+        rightWall.Material = floor.Material;
+        
+        // 天花板
+        var ceil = new Plane();
+        ceil.Transform = Transformations.Translation(0, 3, 0) * 
+                         Transformations.RotationX(-180);
+        ceil.Material = floor.Material;
+
+        // 中间的球
+        var middle = Sphere.Default();
+        middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
+        middle.Material = new Material(
+            color: new Color(0.1, 1, 0.5),
+            diffuse: 0.7,
+            specular: 0.3,
+            pattern: pattern);
+        
+        // 右边的球
+        var right = Sphere.Default();
+        right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
+                          Transformations.Scaling(0.5, 0.5, 0.5);
+        right.Material = new Material(
+            color: new Color(0.5, 1, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 左边的球
+        var left = Sphere.Default();
+        left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
+                         Transformations.Scaling(0.33, 0.33, 0.33);
+        left.Material = new Material(
+            color: new Color(1, 0.8, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 构建场景
+        var shapes = new List<Shape> { floor, leftWall, middleWall, rightWall, ceil, left, middle, right };
+        
+        var camera = new Camera(1000, 500, Math.PI / 3);
+        var cameraTransform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 1.5, -5), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        camera.Transform = cameraTransform;
+        
+        var light1 = new Light(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
+        
+        var world = new World(new List<Light> { light1 }, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./making_a_scene_with_shadow_and_plane.png");
+    }
+    
+    
+    public static void PuttingPatterns()
+    {
+        var pattern = new RadialGradientPattern(new Color(1, 0, 0), new Color(0, 0, 1));
+        
+        // 地面（平面）
+        var floor = new Plane();
+        floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0, pattern: pattern);
+
+        // 中间的球
+        var middle = Sphere.Default();
+        middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
+        middle.Material = new Material(
+            color: new Color(0.1, 1, 0.5),
+            diffuse: 0.7,
+            specular: 0.3,
+            pattern: pattern);
+        
+        // 右边的球
+        var right = Sphere.Default();
+        right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
+                          Transformations.Scaling(0.5, 0.5, 0.5);
+        right.Material = new Material(
+            color: new Color(0.5, 1, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 左边的球
+        var left = Sphere.Default();
+        left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
+                         Transformations.Scaling(0.33, 0.33, 0.33);
+        left.Material = new Material(
+            color: new Color(1, 0.8, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 构建场景
+        var shapes = new List<Shape> { floor, left, middle, right };
+        
+        var camera = new Camera(1000, 500, Math.PI / 3);
+        var cameraTransform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 1.5, -5), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        camera.Transform = cameraTransform;
+        
+        var light1 = new Light(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
+        
+        var world = new World(new List<Light> { light1 }, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./making_a_scene_with_patterns.png");
     }
 }

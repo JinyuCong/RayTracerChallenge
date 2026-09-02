@@ -27,6 +27,7 @@ public class Intersection
         var eyeV = -ray.Direction;  // 计算视线向量
         var normalV = Object.NormalAt(hitPoint);  // 计算这个交点的法向量
         var overPoint = hitPoint + normalV * MathUtils.Epsilon;
+        var reflectV = ray.Direction.Reflect(normalV); 
         bool inside;  // 判断视线原点是否在物体内
         
         if (eyeV.Dot(normalV) < 0)
@@ -46,6 +47,7 @@ public class Intersection
             overPoint,
             eyeV, 
             normalV,
+            reflectV,
             inside);
     }
 }

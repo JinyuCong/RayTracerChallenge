@@ -28,9 +28,9 @@ public class World
         // 物体
         var s1 =  Sphere.Default();
         s1.Material = new Material(
-            color:new Color(0.8, 1.0, 0.6), 
-            diffuse:0.7, 
-            specular:0.2);
+            color: new Color(0.8, 1.0, 0.6), 
+            diffuse: 0.7, 
+            specular: 0.2);
         
         var s2 = new Sphere(Tuple4.Point(0, 0, 0),0.5);
         
@@ -87,14 +87,16 @@ public class World
     /// Phong 光照模型
     /// </summary>
     /// <param name="material">材质(Material)</param>
+    /// <param name="obj">这道视线照到的物体</param>
     /// <param name="lights">所有光源(List[Light])</param>
-    /// <param name="point">光线接触到的点(Tuple4)</param>
+    /// <param name="point">视线接触到的点(Tuple4)</param>
     /// <param name="eyeV">视线向量(Tuple4)</param>
     /// <param name="normalV">点对应的法向量(Tuple4)</param>
     /// <param name="shadowFlags">每个光源对应一个"是否被遮挡"的标记</param>
     /// <returns></returns>
     public static Color Lighting(
         Material material, 
+        Shape obj,
         List<Light> lights, 
         Tuple4 point, 
         Tuple4 eyeV, 
@@ -103,8 +105,9 @@ public class World
     {
         Color black = new Color(0, 0, 0);
         Color totalDiffuseSpecular = new Color(0, 0, 0);
+        Color color = (material.Pattern is not null) ? material.Pattern.PatternAtShape(obj, point) : material.Color;
 
-        Color ambient = material.Color * material.Ambient;
+        Color ambient = color * material.Ambient;
 
         for (int i = 0; i < lights.Count; i++)
         {
@@ -117,7 +120,7 @@ public class World
             }
             
             // 结合材质颜色和光源颜色
-            Color effectiveColor = material.Color * light.Intensity;
+            Color effectiveColor = color * light.Intensity;
 
             // 找到交点到光源的向量
             Tuple4 lightV = (light.Position - point).Normalize();
@@ -170,7 +173,7 @@ public class World
     /// <returns>点的颜色(Color)</returns>
     public Color ShadeHit(Computation comps)
     {
-        List<bool> shadowFlags = new List<bool> {};  // 这个点对于世界中所有光源是否处在阴影中的列表
+        List<bool> shadowFlags = new List<bool> ();  // 这个点对于世界中所有光源是否处在阴影中的列表
 
         foreach (var light in Lights)
         {
@@ -180,6 +183,7 @@ public class World
             
         return Lighting(
             comps.Object.Material,
+            comps.Object,
             this.Lights,
             comps.OverPoint,
             comps.EyeV,

@@ -8,6 +8,7 @@ public class Computation
     public Tuple4 OverPoint { get; }
     public Tuple4 EyeV { get; }
     public Tuple4 NormalV { get; }
+    public Tuple4 ReflectV { get; }
     public bool Inside { get; }
 
     /// <summary>
@@ -19,10 +20,11 @@ public class Computation
     /// <param name="overPoint">交点坐标(向物体外偏移一点来消除噪点)</param>
     /// <param name="eyeV">视线向量</param>
     /// <param name="normalV">交点法向量</param>
+    /// <param name="reflectV">交点的反射光线</param>
     /// <param name="inside">视线原点是否在物体内部</param>
     public Computation(double t, Shape obj, Tuple4 point,
         Tuple4 overPoint, Tuple4 eyeV, 
-        Tuple4 normalV, bool inside)
+        Tuple4 normalV, Tuple4 reflectV, bool inside)
     {
         T = t;
         Object = obj;
@@ -30,6 +32,7 @@ public class Computation
         OverPoint = overPoint;
         EyeV = eyeV;
         NormalV = normalV;
+        ReflectV = reflectV;
         Inside = inside;
     }
 }

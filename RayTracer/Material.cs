@@ -7,13 +7,17 @@ public class Material
     public double Diffuse { get; set; }  // 漫反射强度
     public double Specular { get; set; }  // 镜面反射强度
     public double Shininess { get; set; }  // 光泽度
+    public Pattern? Pattern { get; set; }  // 图案
+    public double Reflective { get; set; }  // 反射率
 
     public Material(
         Color? color = null, 
         double ambient = 0.1, 
         double diffuse = 0.9, 
         double specular = 0.9, 
-        double shininess = 200.0
+        double shininess = 200.0,
+        Pattern? pattern = null,
+        double reflective = 0.0
         )
     {
         Color = color ?? new Color(1, 1, 1);
@@ -21,5 +25,7 @@ public class Material
         Diffuse = diffuse;
         Specular = specular;
         Shininess = shininess;
+        Pattern = pattern;
+        Reflective = reflective;
     }
 }
