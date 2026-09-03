@@ -10,6 +10,8 @@ public class Computation
     public Tuple4 NormalV { get; }
     public Tuple4 ReflectV { get; }
     public bool Inside { get; }
+    public double N1 { get; }
+    public double N2 { get; }
 
     /// <summary>
     /// 封装光线与物体交点所有相关的计算数值和向量
@@ -22,9 +24,11 @@ public class Computation
     /// <param name="normalV">交点法向量</param>
     /// <param name="reflectV">交点的反射光线</param>
     /// <param name="inside">视线原点是否在物体内部</param>
+    /// <param name="n1">第一个物体的折射率</param>
+    /// <param name="n2">第二个物体的折射率</param>
     public Computation(double t, Shape obj, Tuple4 point,
-        Tuple4 overPoint, Tuple4 eyeV, 
-        Tuple4 normalV, Tuple4 reflectV, bool inside)
+        Tuple4 overPoint, Tuple4 eyeV, Tuple4 normalV, 
+        Tuple4 reflectV, bool inside, double n1, double n2)
     {
         T = t;
         Object = obj;
@@ -34,5 +38,7 @@ public class Computation
         NormalV = normalV;
         ReflectV = reflectV;
         Inside = inside;
+        N1 = n1;
+        N2 = n2;
     }
 }

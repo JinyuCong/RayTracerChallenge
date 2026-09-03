@@ -9,6 +9,8 @@ public class Material
     public double Shininess { get; set; }  // 光泽度
     public Pattern? Pattern { get; set; }  // 图案
     public double Reflective { get; set; }  // 反射率
+    public double Transparency { get; set; }  // 透明度
+    public double RefractiveIndex { get; set; }  // 折射率
 
     public Material(
         Color? color = null, 
@@ -17,8 +19,9 @@ public class Material
         double specular = 0.9, 
         double shininess = 200.0,
         Pattern? pattern = null,
-        double reflective = 0.0
-        )
+        double reflective = 0.0,
+        double transparency = 0.0,
+        double refractiveIndex = 1.0)
     {
         Color = color ?? new Color(1, 1, 1);
         Ambient = ambient;
@@ -27,5 +30,7 @@ public class Material
         Shininess = shininess;
         Pattern = pattern;
         Reflective = reflective;
+        Transparency = transparency;
+        RefractiveIndex = refractiveIndex;
     }
 }

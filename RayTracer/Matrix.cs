@@ -6,7 +6,7 @@ namespace RayTracerChallenge.RayTracer;
 /// <summary>
 /// 定义矩阵类
 /// </summary>
-public class Matrix
+public struct Matrix : IEquatable<Matrix>
 {
     private readonly double[,] _values;
     public int NumRows { get; }
@@ -57,73 +57,73 @@ public class Matrix
     }
     
     // 矩阵乘矩阵
-    public static Matrix operator *(Matrix A, Matrix B)
+    public static Matrix operator *(Matrix a, Matrix b)
     {
-        if (A.NumCols != B.NumRows)
+        if (a.NumCols != b.NumRows)
         {
             throw new MatrixCannotMultiplyException("number of rows of matrix A and number of " +
                                                     "columns of matrix B are not equal");
         }
         
-        var C = new double[A.NumRows, B.NumCols];
+        var c = new double[a.NumRows, b.NumCols];
 
-        for (int row = 0; row < A.NumRows; row++)
+        for (int row = 0; row < a.NumRows; row++)
         {
-            for (int col = 0; col < B.NumCols; col++)
+            for (int col = 0; col < b.NumCols; col++)
             {
-                for (int i = 0; i < A.NumCols; i++)
+                for (int i = 0; i < a.NumCols; i++)
                 {
-                    C[row, col] += A[row, i] * B[i, col];
+                    c[row, col] += a[row, i] * b[i, col];
                 }
             }
         }
 
-        return new Matrix(C);
+        return new Matrix(c);
     }
     
     // 矩阵乘向量
-    public static Tuple4 operator *(Matrix M, Tuple4 t)
+    public static Tuple4 operator *(Matrix m, Tuple4 t)
     {
-        if (M.NumRows != 4 | M.NumCols != 4)
+        if (m.NumRows != 4 | m.NumCols != 4)
         {
             throw new MatrixCannotMultiplyException("matrix M is not a 4 * 4 matrix, " +
                                                     "which cannot multiply by a tuple4 " +
                                                     "and return a tuple4");
         }
-        double x = M[0, 0] * t.X + M[0, 1] * t.Y + M[0, 2] * t.Z + M[0, 3] * t.W;
-        double y = M[1, 0] * t.X + M[1, 1] * t.Y + M[1, 2] * t.Z + M[1, 3] * t.W;
-        double z = M[2, 0] * t.X + M[2, 1] * t.Y + M[2, 2] * t.Z + M[2, 3] * t.W;
-        double w = M[3, 0] * t.X + M[3, 1] * t.Y + M[3, 2] * t.Z + M[3, 3] * t.W;
+        double x = m[0, 0] * t.X + m[0, 1] * t.Y + m[0, 2] * t.Z + m[0, 3] * t.W;
+        double y = m[1, 0] * t.X + m[1, 1] * t.Y + m[1, 2] * t.Z + m[1, 3] * t.W;
+        double z = m[2, 0] * t.X + m[2, 1] * t.Y + m[2, 2] * t.Z + m[2, 3] * t.W;
+        double w = m[3, 0] * t.X + m[3, 1] * t.Y + m[3, 2] * t.Z + m[3, 3] * t.W;
 
         return new Tuple4(x, y, z, w);
     }
 
-    public static Matrix operator /(Matrix M, double a)
+    public static Matrix operator /(Matrix m, double a)
     {
-        double[,] res = new double[M.NumRows, M.NumCols];
+        double[,] res = new double[m.NumRows, m.NumCols];
         
-        for (int i = 0; i < M.NumRows; i++)
+        for (int i = 0; i < m.NumRows; i++)
         {
-            for (int j = 0; j < M.NumCols; j++)
+            for (int j = 0; j < m.NumCols; j++)
             {
-                res[i, j] = M[i, j] / a;
+                res[i, j] = m[i, j] / a;
             }
         }
 
         return new Matrix(res);
     }
 
-    public static bool operator ==(Matrix a, Matrix b)
+    public bool Equals(Matrix other)
     {
-        if (a.NumRows != b.NumRows | a.NumCols != b.NumCols)
+        if (NumRows != other.NumRows | NumCols != other.NumCols)
         {
             return false;
         }
-        for (int i = 0; i < a.NumRows; i++)
+        for (int i = 0; i < NumRows; i++)
         {
-            for (int j = 0; j < a.NumCols; j++)
+            for (int j = 0; j < NumCols; j++)
             {
-                if (!MathUtils.AlmostEqual(a[i, j], b[i, j]))
+                if (!MathUtils.AlmostEqual(this[i, j], other[i, j]))
                 {
                     return false;
                 }
@@ -132,21 +132,24 @@ public class Matrix
         return true;
     }
     
-    public static bool operator !=(Matrix a, Matrix b)
-    {
-        return !(a == b);
-    }
-    
-    // 重写 Equals(object) —— 消除警告
     public override bool Equals(object? obj)
     {
         return obj is Matrix other && Equals(other);
     }
     
-    // 必须同步重写 GetHashCode
     public override int GetHashCode()
     {
         return HashCode.Combine(_values, NumRows, NumCols);
+    }
+    
+    public static bool operator ==(Matrix a, Matrix b)
+    {
+        return a.Equals(b);
+    }
+    
+    public static bool operator !=(Matrix a, Matrix b)
+    {
+        return !a.Equals(b);
     }
     
     // 单位矩阵

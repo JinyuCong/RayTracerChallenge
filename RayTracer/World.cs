@@ -167,51 +167,6 @@ public class World
     }
     
     /// <summary>
-    /// 通过对一个交点的计算得到这个点的颜色
-    /// </summary>
-    /// <param name="comps">Computation</param>
-    /// <returns>点的颜色(Color)</returns>
-    public Color ShadeHit(Computation comps)
-    {
-        List<bool> shadowFlags = new List<bool> ();  // 这个点对于世界中所有光源是否处在阴影中的列表
-
-        foreach (var light in Lights)
-        {
-            bool inShadow = IsShadowed(light, comps.OverPoint);
-            shadowFlags.Add(inShadow);
-        }
-            
-        return Lighting(
-            comps.Object.Material,
-            comps.Object,
-            this.Lights,
-            comps.OverPoint,
-            comps.EyeV,
-            comps.NormalV,
-            shadowFlags);
-    }
-    
-    /// <summary>
-    /// 通过一个光线计算光线打到的世界上的一个点的颜色
-    /// </summary>
-    /// <param name="r">光线</param>
-    /// <returns>光线与世界第一个交点的颜色(Color)</returns>
-    public Color ColorAt(Ray r)
-    {
-        var xs = IntersectWorld(r);  // 已经按交点的t值从小到大排好的交点列表
-
-        Intersection? hitPoint = HitWorld(xs);
-        
-        if (hitPoint is null)
-        {
-            return new Color(0, 0, 0);  // 无交点返回黑色
-        }
-        
-        var compsHit = hitPoint.PrepareComputations(r);
-        return ShadeHit(compsHit);
-    }
-
-    /// <summary>
     /// 用于判断世界中的一个点是否被物体遮挡（在阴影中）
     /// </summary>
     /// <param name="light">世界中的一个光源</param>
@@ -238,19 +193,91 @@ public class World
     }
 
     /// <summary>
+    /// 计算视线打到的世界上的一个点的颜色
+    /// </summary>
+    /// <param name="r">视线</param>
+    /// <param name="remaining">还剩多少次反射机会，防止两个镜面无限反射</param>
+    /// <returns>视线与世界第一个交点的颜色(Color)</returns>
+    public Color ColorAt(Ray r, int remaining)
+    {
+        var xs = IntersectWorld(r);  // 已经按交点的t值从小到大排好的交点列表
+
+        Intersection? hitPoint = HitWorld(xs);
+        
+        if (hitPoint is null)
+        {
+            return new Color(0, 0, 0);  // 无交点返回黑色
+        }
+        
+        var compsHit = hitPoint.PrepareComputations(r);
+        return ShadeHit(compsHit, remaining);
+    }
+    
+    /// <summary>
+    /// 计算交点反光能在这个点上叠加的颜色
+    /// </summary>
+    /// <param name="comps"></param>
+    /// <param name="remaining">还剩多少次反射机会，防止两个镜面无限反射</param>
+    /// <returns></returns>
+    public Color ReflectedColor(Computation comps, int remaining)
+    {
+        if (remaining <= 0)
+        {
+            return new Color(0, 0, 0);
+        }
+        
+        if (comps.Object.Material.Reflective == 0)
+        {
+            return new Color(0, 0, 0);
+        }
+
+        // 计算视线和物体交点的反射光线
+        var reflectRay = new Ray(comps.OverPoint, comps.ReflectV);
+        
+        // 计算反射光线在交点上叠加的颜色
+        var color = ColorAt(reflectRay, remaining - 1);
+        return color * comps.Object.Material.Reflective;
+    }
+    
+    /// <summary>
+    /// 通过对一个交点的计算得到这个点的颜色
+    /// </summary>
+    /// <param name="comps">Computation</param>
+    /// <param name="remaining">还剩多少次反射机会，防止两个镜面无限反射</param>
+    /// <returns>点的颜色(Color)</returns>
+    public Color ShadeHit(Computation comps, int remaining)
+    {
+        List<bool> shadowFlags = new List<bool> ();  // 这个点对于世界中所有光源是否处在阴影中的列表
+
+        foreach (var light in Lights)
+        {
+            bool inShadow = IsShadowed(light, comps.OverPoint);
+            shadowFlags.Add(inShadow);
+        }
+            
+        Color surface = Lighting(  // 计算这个像素物体表面本来的颜色
+            comps.Object.Material, comps.Object, 
+            this.Lights, comps.OverPoint, comps.EyeV, 
+            comps.NormalV, shadowFlags);
+        Color reflected = ReflectedColor(comps, remaining);  // 计算反光给这个像素叠加的颜色
+        return surface + reflected;
+    }
+
+    /// <summary>
     /// 渲染世界
     /// </summary>
     /// <returns>画布</returns>
     public Canvas Render()
     {
         Canvas canvas = new Canvas(Camera.HSize, Camera.VSize);
-
+        
         Parallel.For(0, Camera.VSize, y => 
         {
             for (int x = 0; x < Camera.HSize; x++)
             {
+                int remaining = 4;
                 Ray ray = Camera.RayForPixel(x, y);
-                Color color = ColorAt(ray);
+                Color color = ColorAt(ray, remaining);
                 canvas.WritePixel(x, y, color);
             }
         });

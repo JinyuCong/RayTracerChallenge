@@ -19,9 +19,8 @@ public class Ray
     /// <summary>
     /// 计算一道光线经过t后到达的点，t为变量
     /// </summary>
-    /// <param name="r">光线</param>
     /// <param name="t">时间</param>
-    /// <returns>Tuple4: 到达的点</returns>
+    /// <returns>到达的点</returns>
     public Tuple4 Position(double t)
     {
         return Origin + Direction * t;

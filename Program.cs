@@ -7,20 +7,28 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        // var pattern = new StripePattern(new Color(1, 1, 1), new Color(0, 0, 0));
-        // var m = new Material(pattern: pattern, ambient: 1, diffuse: 0, specular: 0);
-        // var eyeV = Tuple4.Vector(0, 0, -1);
-        // var normalV = Tuple4.Vector(0, 0, -1);
-        // var light = new Light(Tuple4.Point(0, 0, -10), new Color(1, 1, 1));
-        //
-        // var c1 = World.Lighting(m, new List<Light> { light }, Tuple4.Point(0.9, 0, 0), eyeV, normalV,
-        //     new List<bool> { false });
-        // var c2 = World.Lighting(m, new List<Light> { light }, Tuple4.Point(1.1, 0, 0), eyeV, normalV,
-        //     new List<bool> { false });
-        //
-        // Console.WriteLine(c1);
-        // Console.WriteLine(c2);
+        var a = Sphere.Default();
+        a.Transform = Transformations.Scaling(2, 2, 2);
+        a.Material.RefractiveIndex = 1.5;
         
-        Challenges.PuttingPatterns();
+        var b = Sphere.Default();
+        b.Transform = Transformations.Translation(0, 0, -0.25);
+        b.Material.RefractiveIndex = 2.0;
+        
+        var c = Sphere.Default();
+        c.Transform = Transformations.Translation(0, 0, 0.25);
+        c.Material.RefractiveIndex = 2.5;
+
+        var r = new Ray(Tuple4.Point(0, 0, -4), Tuple4.Vector(0, 0, 1));
+        var xs = new List<Intersection>
+        {
+            a.Intersect(r)[0], b.Intersect(r)[0], c.Intersect(r)[0], b.Intersect(r)[1], c.Intersect(r)[1],
+            a.Intersect(r)[1]
+        };
+        for (int i = 0; i < xs.Count; i++)
+        {
+            var comps = xs[i].PrepareComputations(r);
+            Console.WriteLine(comps.Point);
+        }
     }
 }

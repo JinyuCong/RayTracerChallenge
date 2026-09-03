@@ -1,6 +1,6 @@
 ﻿namespace RayTracerChallenge.RayTracer;
 
-public class Color
+public struct Color : IEquatable<Color>
 {
     public double Red { get; }
     public double Green { get; }
@@ -34,16 +34,31 @@ public class Color
         return new Color(a.Red * b.Red, a.Green * b.Green, a.Blue * b.Blue);
     }
 
+    public bool Equals(Color other)
+    {
+        return MathUtils.AlmostEqual(Red, other.Red) &&
+               MathUtils.AlmostEqual(Green, other.Green) &&
+               MathUtils.AlmostEqual(Blue, other.Blue);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is Color other && Equals(other);
+    }
+    
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Red, Green, Blue);
+    }
+    
     public static bool operator ==(Color a, Color b)
     {
-        return MathUtils.AlmostEqual(a.Red, b.Red) &&
-               MathUtils.AlmostEqual(a.Green, b.Green) &&
-               MathUtils.AlmostEqual(a.Blue, b.Blue);
+        return a.Equals(b);
     }
     
     public static bool operator !=(Color a, Color b)
     {
-        return !(a == b);
+        return !a.Equals(b);
     }
     
     public override string ToString()

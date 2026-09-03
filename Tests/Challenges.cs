@@ -440,4 +440,57 @@ public static class Challenges
         var canvas = world.Render();
         canvas.SavePng("./making_a_scene_with_patterns.png");
     }
+    
+    public static void PuttingReflections()
+    {
+        // 地面（平面，0.5反射率）
+        var floor = new Plane();
+        var pattern = new CheckerPattern(new Color(0.2, 0.2, 0.2), new Color(1, 1, 1));
+        floor.Material = new Material(
+            color: new Color(1, 0.9, 0.9), 
+            specular: 0, reflective: 0.5, pattern: pattern);
+
+        // 中间的球（0.5反射率）
+        var middle = Sphere.Default();
+        middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
+        middle.Material = new Material(
+            color: new Color(0.1, 1, 0.5),
+            diffuse: 0.7,
+            specular: 0.3,
+            reflective: 0.5);
+        
+        // 右边的球
+        var right = Sphere.Default();
+        right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
+                          Transformations.Scaling(0.5, 0.5, 0.5);
+        right.Material = new Material(
+            color: new Color(0.5, 1, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 左边的球
+        var left = Sphere.Default();
+        left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
+                         Transformations.Scaling(0.33, 0.33, 0.33);
+        left.Material = new Material(
+            color: new Color(1, 0.8, 0.1),
+            diffuse: 0.7,
+            specular: 0.3);
+        
+        // 构建场景
+        var shapes = new List<Shape> { floor, left, middle, right };
+        
+        var camera = new Camera(1000, 500, Math.PI / 3);
+        var cameraTransform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 1.5, -5), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        camera.Transform = cameraTransform;
+        
+        var light1 = new Light(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
+        
+        var world = new World(new List<Light> { light1 }, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./reflection_scene.png");
+    }
 }

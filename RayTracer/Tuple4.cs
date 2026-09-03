@@ -2,11 +2,11 @@
 
 using Exceptions;
 
-public class Tuple4
+public struct Tuple4 : IEquatable<Tuple4>
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-    public double Z { get; set; }
+    public double X { get; }
+    public double Y { get; }
+    public double Z { get; }
     public double W { get; set; }
 
     public Tuple4(){}
@@ -74,24 +74,16 @@ public class Tuple4
         return new Tuple4(a.X / scalar, a.Y / scalar, a.Z / scalar, a.W / scalar);
     }
     
-    
-    
-    // 相等比较：必须用 Epsilon 容差
-    public static bool operator ==(Tuple4 a, Tuple4 b)
+    // 实现接口要求的强类型 Equals
+    public bool Equals(Tuple4 other)
     {
-        return MathUtils.AlmostEqual(a.X, b.X) && 
-               MathUtils.AlmostEqual(a.Y, b.Y) && 
-               MathUtils.AlmostEqual(a.Z, b.Z) && 
-               MathUtils.AlmostEqual(a.W, b.W);
-            
+        return MathUtils.AlmostEqual(X, other.X) &&
+               MathUtils.AlmostEqual(Y, other.Y) &&
+               MathUtils.AlmostEqual(Z, other.Z) &&
+               MathUtils.AlmostEqual(W, other.W);
     }
 
-    public static bool operator !=(Tuple4 a, Tuple4 b)
-    {
-        return !(a == b);
-    }
-    
-    // 重写 Equals(object) —— 消除警告
+    // 重写 Equals(object)
     public override bool Equals(object? obj)
     {
         return obj is Tuple4 other && Equals(other);
@@ -101,6 +93,17 @@ public class Tuple4
     public override int GetHashCode()
     {
         return HashCode.Combine(X, Y, Z, W);
+    }
+    
+    // 相等比较：必须用 Epsilon 容差
+    public static bool operator ==(Tuple4 a, Tuple4 b)
+    {
+        return a.Equals(b);
+    }
+
+    public static bool operator !=(Tuple4 a, Tuple4 b)
+    {
+        return !a.Equals(b);
     }
     
     // 模长
