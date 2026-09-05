@@ -121,7 +121,7 @@ public static class Challenges
                 Ray r = new Ray(rayOrigin, (position - rayOrigin).Normalize());
                 List<Intersection> xs = sphere.Intersect(r);
 
-                Intersection? intersection = sphere.Hit(xs);
+                Intersection? intersection = Intersection.Hit(xs);
                 if (intersection is not null)
                 {
                     canvas.WritePixel(x, y, color);
@@ -164,7 +164,7 @@ public static class Challenges
                 var ray = new Ray(rayOrigin, (position - rayOrigin).Normalize());  // 这个像素到视线原点的光线
 
                 List<Intersection> xs = shape.Intersect(ray);
-                Intersection? intersection = shape.Hit(xs);
+                Intersection? intersection = Intersection.Hit(xs);
                 if (intersection is not null)
                 {
                     var hitPoint = ray.Position(intersection.T);
@@ -492,5 +492,251 @@ public static class Challenges
         var world = new World(new List<Light> { light1 }, shapes, camera);
         var canvas = world.Render();
         canvas.SavePng("./reflection_scene.png");
+    }
+    
+    public static void PuttingRefractions()
+    {
+        var floor = new Plane();
+        floor.Material.Pattern = new CheckerPattern(new Color(0.7, 0.2, 0.2), new Color(1, 1, 1));
+        floor.Material.Reflective = 0.5;
+        
+        var wall = new Plane();
+        wall.Transform = Transformations.Translation(-3, 0, -3) * 
+                         Transformations.RotationY(45) *
+                         Transformations.RotationX(-90);
+        var wallPattern = new GradientPattern(new (0, 0.8, 0.6), new(0.8, 0.6, 1));
+        wallPattern.Transform = Transformations.Scaling(15, 1, 1);
+        wall.Material.Pattern = wallPattern;
+        
+        var ball1 = Sphere.Default();
+        ball1.Transform = Transformations.Translation(4, 2, 4) *
+                          Transformations.Scaling(2, 2, 2);
+        ball1.Material = new Material(
+            ambient: 0,
+            diffuse: 0,
+            specular: 0.9,
+            transparency: 0.9,
+            reflective: 0.9,
+            shininess: 300,
+            refractiveIndex: 1.5);
+        ball1.CastsShadow = false;
+        
+        var ball2 = Sphere.Default();
+        ball2.Transform = Transformations.Translation(5, 1, 1);
+        ball2.Material = new Material(
+            color: new Color(0, 0.7, 0.6),
+            ambient: 0.2,
+            diffuse: 0,
+            specular: 0.9,
+            transparency: 0.9,
+            reflective: 0.9,
+            shininess: 300,
+            refractiveIndex: 1.5);
+        ball2.CastsShadow = false;
+        
+        var ball3 = Sphere.Default();
+        ball3.Transform = Transformations.Translation(-1, 3, 1) *
+                          Transformations.Scaling(3, 3, 3);
+        ball3.Material = new Material(
+            ambient: 0,
+            diffuse: 0,
+            specular: 0.9,
+            transparency: 0.9,
+            reflective: 0.9,
+            shininess: 300,
+            refractiveIndex: 1.5);
+        ball3.CastsShadow = false;
+        
+        var ball4 = Sphere.Default();
+        ball4.Transform = Transformations.Translation(1, 1, 6);
+        ball4.Material = new Material(
+            color: new Color(0, 0.6, 1),
+            ambient: 0.12,
+            diffuse: 0,
+            specular: 0.9,
+            transparency: 0.9,
+            reflective: 0.9,
+            shininess: 300,
+            refractiveIndex: 1.5);
+        ball4.CastsShadow = false;
+        
+        // 构建场景
+        var shapes = new List<Shape> { floor, wall, ball1, ball2, ball3, ball4 };
+        
+        var camera = new Camera(1920, 1080, Math.PI / 3);
+        var cameraTransform = Transformations.ViewTransformation(
+            Tuple4.Point(13, 2, 13), 
+            Tuple4.Point(1, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        camera.Transform = cameraTransform;
+        
+        var light = new Light(Tuple4.Point(10, 10, 5), new Color(1, 1, 1));
+        
+        var world = new World(
+            new List<Light> { light }, 
+            shapes, 
+            camera);
+        var canvas = world.Render();
+        canvas.SavePng("./glass_balls.png");
+    }
+
+    /// <summary>
+    /// 渲染封面图
+    /// </summary>
+    public static void RenderingCover()
+    {
+        // 相机
+        var camera = new Camera(1000, 1000, 0.785);
+        camera.Transform = Transformations.ViewTransformation(
+            Tuple4.Point(-6, 6, -10),
+            Tuple4.Point(6, 0, 6),
+            Tuple4.Vector(-0.45, 1, 0));
+        
+        // 光源
+        var light1 = new Light(
+            Tuple4.Point(50, 100, -50),
+            new Color(1, 1, 1));
+        var light2 = new Light(
+            Tuple4.Point(-400, 50, -10),
+            new Color(0.2, 0.2, 0.2));
+        var lights = new List<Light> { light1, light2 };
+        
+        // 材质
+        var whiteMaterial = new Material(
+            color: new Color(1, 1, 1),
+            diffuse: 0.7,
+            ambient: 0.1,
+            specular: 0.0,
+            reflective: 0.1);
+        
+        var blueMaterial = new Material(
+            color: new Color(0.537, 0.831, 0.914),
+            diffuse: 0.7,
+            ambient: 0.1,
+            specular: 0.0,
+            reflective: 0.1);
+
+        var redMaterial = new Material(
+            color: new Color(0.941, 0.322, 0.388),
+            diffuse: 0.7,
+            ambient: 0.1,
+            specular: 0.0,
+            reflective: 0.1);
+
+        var purpleMaterial = new Material(
+            color: new Color(0.373, 0.404, 0.550),
+            diffuse: 0.7,
+            ambient: 0.1,
+            specular: 0.0,
+            reflective: 0.1);
+        
+        // 变换
+        var standardTransform = Transformations.Translation(1, -1, 1) * 
+                                Transformations.Scaling(0.5, 0.5, 0.5);
+        var largeObject = standardTransform * Transformations.Scaling(3.5, 3.5, 3.5);
+        var mediumObject = standardTransform * Transformations.Scaling(3, 3, 3);
+        var smallObject = standardTransform * Transformations.Scaling(2, 2, 2);
+        
+        // 背景
+        var background = new Plane();
+        background.Material = new Material(
+            color: new Color(1, 1, 1),
+            ambient: 1,
+            diffuse: 0,
+            specular: 0);
+        background.Transform =  Transformations.Translation(0, 0, 500) * 
+                                Transformations.RotationX(90);
+        
+        // 球
+        var sphere = Sphere.Default();
+        sphere.Material = new Material(
+            color: new Color(0.373, 0.404, 0.550),
+            diffuse: 0.2,
+            ambient: 0.0,
+            specular: 1.0,
+            shininess: 200,
+            reflective: 0.7,
+            transparency: 0.7,
+            refractiveIndex: 1.5);
+        sphere.Transform = largeObject;
+        
+        // 所有正方体
+        var cube1 = new Cube();
+        cube1.Material = whiteMaterial;
+        cube1.Transform = Transformations.Translation(4, 0, 0) * mediumObject;
+
+        var cube2 = new Cube();
+        cube2.Material = blueMaterial;
+        cube2.Transform = Transformations.Translation(8.5, 1.5, -0.5) * largeObject;
+
+        var cube3 = new Cube();
+        cube3.Material = redMaterial;
+        cube3.Transform = Transformations.Translation(0, 0, 4) * largeObject;
+
+        var cube4 = new Cube();
+        cube4.Material = whiteMaterial;
+        cube4.Transform = Transformations.Translation(4, 0, 4) * smallObject;
+        
+        var cube5 = new Cube();
+        cube5.Material = purpleMaterial;
+        cube5.Transform = Transformations.Translation(7.5, 0.5, 4) * mediumObject;
+
+        var cube6 = new Cube();
+        cube6.Material = whiteMaterial;
+        cube6.Transform = Transformations.Translation(-0.25, 0.25, 8) * mediumObject;
+        
+        var cube7 = new Cube();
+        cube7.Material = blueMaterial;
+        cube7.Transform = Transformations.Translation(4, 1, 7.5) * largeObject;
+        
+        var cube8 = new Cube();
+        cube8.Material = redMaterial;
+        cube8.Transform = Transformations.Translation(10, 2, 7.5) * mediumObject;
+        
+        var cube9 = new Cube();
+        cube9.Material = whiteMaterial;
+        cube9.Transform = Transformations.Translation(8, 2, 12) * smallObject;
+        
+        var cube10 = new Cube();
+        cube10.Material = whiteMaterial;
+        cube10.Transform = Transformations.Translation(20, 1, 9) * smallObject;
+        
+        var cube11 = new Cube();
+        cube11.Material = blueMaterial;
+        cube11.Transform = Transformations.Translation(-0.5, -5, 0.25) * largeObject;
+        
+        var cube12 = new Cube();
+        cube12.Material = redMaterial;
+        cube12.Transform = Transformations.Translation(4, -4, 0) * largeObject;
+        
+        var cube13 = new Cube();
+        cube13.Material = whiteMaterial;
+        cube13.Transform = Transformations.Translation(8.5, -4, 0) * largeObject;
+        
+        var cube14 = new Cube();
+        cube14.Material = whiteMaterial;
+        cube14.Transform = Transformations.Translation(0, -4, 4) * largeObject;
+        
+        var cube15 = new Cube();
+        cube15.Material = purpleMaterial;
+        cube15.Transform = Transformations.Translation(-0.5, -4.5, 8) * largeObject;
+        
+        var cube16 = new Cube();
+        cube16.Material = whiteMaterial;
+        cube16.Transform = Transformations.Translation(0, -8, 4) * largeObject;
+        
+        var cube17 = new Cube();
+        cube17.Material = whiteMaterial;
+        cube17.Transform = Transformations.Translation(-0.5, -8.5, 8) * largeObject;
+
+        var shapes = new List<Shape>
+        {
+            background, sphere, cube1, cube2, cube3, cube4, cube5, cube6, cube7, cube8,
+            cube9, cube10, cube11, cube12, cube13, cube14, cube15, cube16, cube17
+        };
+
+        var w = new World(lights, shapes, camera);
+        var canvas = w.Render();
+        canvas.SavePng("./cover.png");
     }
 }

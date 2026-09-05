@@ -5,6 +5,7 @@ public class World
     public List<Light> Lights { get; set; }
     public List<Shape> Shapes { get; set; }
     public Camera Camera { get; set; }
+    public Color Background { get; set; } = new Color(0, 0, 0);  // 光线什么都没打到时的颜色
     
     public World(List<Light> lights, List<Shape> shapes, Camera camera)
     {
@@ -61,26 +62,10 @@ public class World
                 xs.Add(intersection);
             }
         }
-
-        xs.Sort((x1, x2) => x1.T.CompareTo(x2.T));
+        
+        xs.Sort((a, b) => a.T.CompareTo(b.T));
+        
         return xs;
-    }
-
-    /// <summary>
-    /// 拿所有和世界的交点中第一个和世界的交点
-    /// </summary>
-    /// <param name="xs">所有交点（已经按交点的t值从小到大排好）</param>
-    /// <returns>第一个交点</returns>
-    public Intersection? HitWorld(List<Intersection> xs)
-    {
-        xs.RemoveAll(i => i.T < 0);  // 删除所有t小于0的交点（在光线背后不算）
-        
-        if (xs.Count == 0)
-        {
-            return null;  // 无交点
-        }
-        
-        return xs[0];  // 返回列表中第一个就是第一个交点
     }
     
     /// <summary>
@@ -186,9 +171,11 @@ public class World
         Ray lightRay = new Ray(point, direction);
         
         // 计算光线和世界交点
-        List<Intersection> intersections = IntersectWorld(lightRay);
-        Intersection? hit = HitWorld(intersections);
-
+        List<Intersection> intersections = IntersectWorld(lightRay)
+            .Where(i => i.Object.CastsShadow)
+            .ToList();
+        
+        Intersection? hit = Intersection.Hit(intersections);
         return (hit is not null && hit.T < distance);
     }
 
@@ -202,14 +189,14 @@ public class World
     {
         var xs = IntersectWorld(r);  // 已经按交点的t值从小到大排好的交点列表
 
-        Intersection? hitPoint = HitWorld(xs);
+        Intersection? hitPoint = Intersection.Hit(xs);
         
         if (hitPoint is null)
         {
-            return new Color(0, 0, 0);  // 无交点返回黑色
+            return Background;  // 无交点返回背景色
         }
         
-        var compsHit = hitPoint.PrepareComputations(r);
+        var compsHit = hitPoint.PrepareComputations(r, xs);
         return ShadeHit(compsHit, remaining);
     }
     
@@ -238,6 +225,69 @@ public class World
         var color = ColorAt(reflectRay, remaining - 1);
         return color * comps.Object.Material.Reflective;
     }
+
+    /// <summary>
+    /// 计算交点折射光线能在这个点上叠加的颜色
+    /// </summary>
+    /// <param name="comps"></param>
+    /// <param name="remaining">还剩多少次反射机会，防止两个镜面无限反射</param>
+    /// <returns></returns>
+    public Color RefractedColor(Computation comps, int remaining)
+    {
+        // 防止无限反射
+        if (remaining <= 0)
+        {
+            return new Color(0, 0, 0);
+        }
+        // 透明度为0那折射叠加的颜色就是0（不叠加任何颜色）
+        if (comps.Object.Material.Transparency == 0)
+        {
+            return new Color(0, 0, 0);
+        }
+
+        // 若入射角过大则只有全反射没有折射
+        var nRatio = comps.N1 / comps.N2;
+        var cosI = comps.EyeV.Dot(comps.NormalV);
+        var sin2T = nRatio * nRatio * (1 - cosI * cosI);
+        if (sin2T > 1)
+        {
+            return new Color(0, 0, 0);
+        }
+        
+        // 找到折射在交点上叠加的颜色
+        var cosT = Math.Sqrt(1.0 - sin2T);
+        // 折射光线的方向
+        var direction = comps.NormalV * (nRatio * cosI - cosT) - comps.EyeV * nRatio;
+        // 折射光线
+        var refractRay = new Ray(comps.UnderPoint, direction);
+        return ColorAt(refractRay, remaining - 1) * comps.Object.Material.Transparency;
+    }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="comps"></param>
+    /// <returns></returns>
+    public static double Schlick(Computation comps)
+    {
+        // 视线和法线的余弦相似度
+        var cos = comps.EyeV.Dot(comps.NormalV);
+        
+        // 只有介质1的密度大于介质2的密度时全反射才会发生（光从水里射向空气）
+        if (comps.N1 > comps.N2)
+        {
+            var n = comps.N1 / comps.N2;
+            var sin2T = n * n * (1.0 - cos * cos);
+            if (sin2T > 1.0)
+                return 1.0;
+
+            var cosT = Math.Sqrt(1.0 - sin2T);
+            cos = cosT;
+        }
+
+        var r0 = Math.Pow((comps.N1 - comps.N2) / (comps.N1 + comps.N2), 2);
+        return r0 + (1 - r0) * Math.Pow(1 - cos, 5);
+    }
     
     /// <summary>
     /// 通过对一个交点的计算得到这个点的颜色
@@ -259,15 +309,27 @@ public class World
             comps.Object.Material, comps.Object, 
             this.Lights, comps.OverPoint, comps.EyeV, 
             comps.NormalV, shadowFlags);
-        Color reflected = ReflectedColor(comps, remaining);  // 计算反光给这个像素叠加的颜色
-        return surface + reflected;
+        Color reflected = ReflectedColor(comps, remaining);  // 计算反射给这个点叠加的颜色
+        Color refracted = RefractedColor(comps, remaining);  // 计算折射给这个点叠加的颜色
+
+        var material = comps.Object.Material;
+        if (material.Reflective > 0 && material.Transparency > 0)
+        {
+            var reflectance = Schlick(comps);
+            return surface +
+                   reflected * reflectance +
+                   refracted * (1 - reflectance);
+        }
+
+        return surface + reflected + refracted;
     }
 
     /// <summary>
     /// 渲染世界
     /// </summary>
+    /// <param name="remaining">每条视线最多允许的反射/折射次数，玻璃多的场景需要调大</param>
     /// <returns>画布</returns>
-    public Canvas Render()
+    public Canvas Render(int remaining = 5)
     {
         Canvas canvas = new Canvas(Camera.HSize, Camera.VSize);
         
@@ -275,7 +337,6 @@ public class World
         {
             for (int x = 0; x < Camera.HSize; x++)
             {
-                int remaining = 4;
                 Ray ray = Camera.RayForPixel(x, y);
                 Color color = ColorAt(ray, remaining);
                 canvas.WritePixel(x, y, color);

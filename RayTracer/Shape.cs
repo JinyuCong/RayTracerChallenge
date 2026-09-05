@@ -10,6 +10,7 @@ public abstract class Shape
 {
     public Matrix Transform { get; set; } = Matrix.Identity(4);  // 对物体的变换（应用中其实是对投射到物体上的光线进行逆变换）
     public Material Material { get; set; } = new Material();  // 默认材质
+    public bool CastsShadow { get; set; } = true;
 
     /// <summary>
     /// 所有形状都需要先将光线转换到本地坐标
@@ -38,28 +39,6 @@ public abstract class Shape
 
     public abstract List<Intersection> LocalIntersect(Ray localRay);
     public abstract Tuple4 LocalNormalAt(Tuple4 localPoint);
-    
-    /// <summary>
-    /// 从光线与物体的交点中取出和物体的第一个交点的t值
-    /// </summary>
-    /// <param name="intersections">包含 Intersection 类的数组，为光线和物体的所有潜在交点</param>
-    /// <returns>Intersection 类，包含光线和物体第一个交点的 t 值和物体本身</returns>
-    public Intersection? Hit(List<Intersection> intersections)
-    {
-        Intersection? result = null;
-        
-        foreach (var x in intersections)
-        {
-            if (x.T < 0) continue;
-
-            if (result is null || x.T < result.T)
-            {
-                result = x;
-            }
-        }
-
-        return result;
-    }
 }
 
 
@@ -85,6 +64,14 @@ public class Sphere : Shape
     public static Sphere Default()
     {
         return new Sphere(Tuple4.Point(0, 0, 0), 1);
+    }
+
+    public static Sphere GlassSphere()
+    {
+        var s = new Sphere(Tuple4.Point(0, 0, 0), 1);
+        s.Material.Transparency = 1.0;
+        s.Material.RefractiveIndex = 1.5;
+        return s;
     }
 
     /// <summary>
@@ -146,5 +133,74 @@ public class Plane : Shape
     public override Tuple4 LocalNormalAt(Tuple4 localPoint)
     {
         return Tuple4.Vector(0, 1, 0);
+    }
+}
+
+/// <summary>
+/// 方体子类
+/// </summary>
+public class Cube : Shape
+{
+    public Cube() {}
+
+    private Tuple<double, double> CheckAxis(double origin, double direction)
+    {
+        double tMinNumerator = -1 - origin;
+        double tMaxNumerator = 1 - origin;
+
+        double tMin;
+        double tMax;
+        if (Math.Abs(direction) >= MathUtils.Epsilon)
+        {
+            tMin = tMinNumerator / direction;
+            tMax = tMaxNumerator / direction;
+        }
+        else
+        {
+            tMin = tMinNumerator * double.PositiveInfinity;
+            tMax = tMaxNumerator * double.PositiveInfinity;
+        }
+
+        if (tMin > tMax)
+        {
+            double temp;
+            temp = tMin;
+            tMin = tMax;
+            tMax = temp;
+        }
+
+        return new Tuple<double, double>(tMin, tMax);
+    }
+    
+    public override List<Intersection> LocalIntersect(Ray localRay)
+    {
+        var (xTMin, xTMax) = CheckAxis(localRay.Origin.X, localRay.Direction.X);
+        var (yTMin, yTMax) = CheckAxis(localRay.Origin.Y, localRay.Direction.Y);
+        var (zTMin, zTMax) = CheckAxis(localRay.Origin.Z, localRay.Direction.Z);
+
+        var tMin = new List<double> { xTMin, yTMin, zTMin }.Max();
+        var tMax = new List<double> { xTMax, yTMax, zTMax }.Min();
+
+        if (tMin > tMax)
+            return new List<Intersection>();
+        
+        return new List<Intersection> {new Intersection(tMin, this), new Intersection(tMax, this)};
+    }
+
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    {
+        var maxC = new List<double> { Math.Abs(localPoint.X), Math.Abs(localPoint.Y), Math.Abs(localPoint.Z) }.Max();
+
+        if (MathUtils.AlmostEqual(maxC, Math.Abs(localPoint.X)))
+        {
+            return Tuple4.Vector(localPoint.X, 0, 0);
+        }
+
+        if (MathUtils.AlmostEqual(maxC, Math.Abs(localPoint.Y)))
+        {
+            return Tuple4.Vector(0, localPoint.Y, 0);
+        }
+
+        return Tuple4.Vector(0, 0, localPoint.Z);
     }
 }
