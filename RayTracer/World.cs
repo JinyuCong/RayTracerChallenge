@@ -337,9 +337,17 @@ public class World
         {
             for (int x = 0; x < Camera.HSize; x++)
             {
-                Ray ray = Camera.RayForPixel(x, y);
-                Color color = ColorAt(ray, remaining);
-                canvas.WritePixel(x, y, color);
+                List<Ray> rays = Camera.RayForPixel(x, y);
+                
+                Color colorSum = new Color(0, 0, 0);
+                foreach (var ray in rays)
+                {
+                    colorSum += ColorAt(ray, remaining);
+                }
+
+                Color colorAverage = colorSum / rays.Count;
+                
+                canvas.WritePixel(x, y, colorAverage);
             }
         });
 

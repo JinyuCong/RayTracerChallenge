@@ -737,6 +737,6 @@ public static class Challenges
 
         var w = new World(lights, shapes, camera);
         var canvas = w.Render();
-        canvas.SavePng("./cover.png");
+        canvas.SavePng("./cover_with_anti_alias.png");
     }
 }

@@ -34,6 +34,11 @@ public struct Color : IEquatable<Color>
         return new Color(a.Red * b.Red, a.Green * b.Green, a.Blue * b.Blue);
     }
 
+    public static Color operator /(Color a, double b)
+    {
+        return new Color(a.Red / b, a.Green / b, a.Blue / b);
+    }
+
     public bool Equals(Color other)
     {
         return MathUtils.AlmostEqual(Red, other.Red) &&

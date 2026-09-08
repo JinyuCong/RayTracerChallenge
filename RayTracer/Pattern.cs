@@ -7,8 +7,15 @@ public abstract class Pattern
 {
     public Color ColorA { get; set; } = new Color(0, 0, 0);
     public Color ColorB { get; set; } = new Color(1, 1, 1);
-    public Matrix Transform { get; set; } = Matrix.Identity(4);
+    private Matrix _inverseTransform;
+    private Matrix _transform;
+    public Matrix Transform
+    {
+        get => _transform;
+        set { _transform = value; _inverseTransform = value.Inverse(); }
+    }
 
+    public Matrix InverseTransform => _inverseTransform;
     /// <summary>
     /// 有图案的物体在世界坐标中的一个点的颜色
     /// </summary>
@@ -18,10 +25,10 @@ public abstract class Pattern
     public Color PatternAtShape(Shape obj, Tuple4 worldPoint)
     {
         // 将世界坐标转换为物体坐标
-        Tuple4 objectPoint = obj.Transform.Inverse() * worldPoint;
+        Tuple4 objectPoint = obj.InverseTransform * worldPoint;
         
         // 将物体坐标转换为图案坐标
-        Tuple4 patternPoint = this.Transform.Inverse() * objectPoint;
+        Tuple4 patternPoint = this.InverseTransform * objectPoint;
         return LocalColorAt(patternPoint);
     }
 
@@ -37,6 +44,7 @@ public class StripePattern : Pattern
     {
         ColorA = colorA;
         ColorB = colorB;
+        Transform = Matrix.Identity(4);
     }
 
     /// <summary>
@@ -60,6 +68,7 @@ public class GradientPattern : Pattern
     {
         ColorA = colorA;
         ColorB = colorB;
+        Transform = Matrix.Identity(4);
     }
 
     protected override Color LocalColorAt(Tuple4 localPoint)
@@ -78,6 +87,7 @@ public class RingPattern : Pattern
     {
         ColorA = colorA;
         ColorB = colorB;
+        Transform = Matrix.Identity(4);
     }
 
     protected override Color LocalColorAt(Tuple4 localPoint)
@@ -100,6 +110,7 @@ public class CheckerPattern : Pattern
     {
         ColorA = colorA;
         ColorB = colorB;
+        Transform = Matrix.Identity(4);
     }
 
     protected override Color LocalColorAt(Tuple4 localPoint)
@@ -120,6 +131,7 @@ public class RadialGradientPattern : Pattern
     {
         ColorA = colorA;
         ColorB = colorB;
+        Transform = Matrix.Identity(4);
     }
 
     protected override Color LocalColorAt(Tuple4 localPoint)

@@ -8,7 +8,15 @@ namespace RayTracerChallenge.RayTracer;
 /// </summary>
 public abstract class Shape
 {
-    public Matrix Transform { get; set; } = Matrix.Identity(4);  // 对物体的变换（应用中其实是对投射到物体上的光线进行逆变换）
+    private Matrix _inverseTransform;
+    private Matrix _transform;
+    public Matrix Transform  // 对物体的变换（应用中其实是对投射到物体上的光线进行逆变换）
+    {
+        get => _transform;
+        set { _transform = value; _inverseTransform = value.Inverse(); }
+    }
+
+    public Matrix InverseTransform => _inverseTransform;
     public Material Material { get; set; } = new Material();  // 默认材质
     public bool CastsShadow { get; set; } = true;
 
@@ -19,7 +27,7 @@ public abstract class Shape
     /// <returns></returns>
     public List<Intersection> Intersect(Ray ray)
     {
-        Ray localRay = ray.Transform(Transform.Inverse());
+        Ray localRay = ray.Transform(InverseTransform);
         return LocalIntersect(localRay);
     }
 
@@ -30,9 +38,9 @@ public abstract class Shape
     /// <returns></returns>
     public Tuple4 NormalAt(Tuple4 worldPoint)
     {
-        var localPoint = Transform.Inverse() * worldPoint;  // 世界坐标系的点转换为物体坐标系点
+        var localPoint = InverseTransform * worldPoint;  // 世界坐标系的点转换为物体坐标系点
         var localNormal = LocalNormalAt(localPoint);
-        var worldNormal = Transform.Inverse().Transpose() * localNormal;
+        var worldNormal = InverseTransform.Transpose() * localNormal;
         worldNormal.W = 0;
         return worldNormal.Normalize();
     }
@@ -59,6 +67,7 @@ public class Sphere : Shape
     {
         Center = center;
         Radius = radius;
+        Transform = Matrix.Identity(4);
     }
 
     public static Sphere Default()
@@ -116,7 +125,10 @@ public class Sphere : Shape
 /// </summary>
 public class Plane : Shape
 {
-    public Plane() {}
+    public Plane()
+    {
+        Transform = Matrix.Identity(4);
+    }
 
     public override List<Intersection> LocalIntersect(Ray localRay)
     {
@@ -141,7 +153,10 @@ public class Plane : Shape
 /// </summary>
 public class Cube : Shape
 {
-    public Cube() {}
+    public Cube()
+    {
+        Transform = Matrix.Identity(4);
+    }
 
     private Tuple<double, double> CheckAxis(double origin, double direction)
     {
@@ -202,5 +217,86 @@ public class Cube : Shape
         }
 
         return Tuple4.Vector(0, 0, localPoint.Z);
+    }
+}
+
+
+/// <summary>
+/// 圆柱体
+/// </summary>
+public class Cylinder : Shape
+{
+    /// <summary>
+    /// 一开始圆柱的高是从负无穷到正无穷
+    /// </summary>
+    public double Minimum { get; set; } = double.NegativeInfinity;
+    public double Maximum { get; set; } = double.PositiveInfinity;
+
+    public Cylinder()
+    {
+        Transform = Matrix.Identity(4);
+    }
+
+    /// <summary>
+    /// 求圆柱体和视线相交的t值
+    /// </summary>
+    /// <param name="localRay">圆柱体坐标系中的光线</param>
+    /// <returns>t值列表</returns>
+    public override List<Intersection> LocalIntersect(Ray localRay)
+    {
+        var a = localRay.Direction.X * localRay.Direction.X + 
+                localRay.Direction.Z * localRay.Direction.Z;
+        
+        if (MathUtils.AlmostEqual(a, 0.0))
+        {
+            return new List<Intersection>();
+        }
+
+        var b = 2 * localRay.Origin.X * localRay.Direction.X +
+                2 * localRay.Origin.Z * localRay.Direction.Z;
+        
+        var c = localRay.Origin.X * localRay.Origin.X + 
+                localRay.Origin.Z * localRay.Origin.Z - 1;
+
+        var disc = b * b - 4 * a * c;
+        if (disc < 0)
+        {
+            return new List<Intersection>();
+        }
+
+        var t0 = (-b - Math.Sqrt(disc)) / (2 * a);
+        var t1 = (-b + Math.Sqrt(disc)) / (2 * a);
+
+        if (t0 > t1)
+        {
+            var temp = t1;
+            t0 = t1;
+            t1 = temp;
+        }
+        
+        // 从无限高的圆柱截取一段
+        var xs = new List<Intersection>();
+
+        // 核实两个交点的y坐标是否都在截断的部分内
+        var y0 = localRay.Origin.Y + t0 * localRay.Direction.Y;  // 第0个交点坐标的y坐标
+        if (this.Minimum < y0 && y0 < this.Maximum)
+        {
+            xs.Add(new Intersection(t0, this));
+        }
+        
+        var y1 = localRay.Origin.Y + t1 * localRay.Direction.Y;  // 第1个交点坐标的y坐标
+        if (this.Minimum < y1 && y1 < this.Maximum)
+        {
+            xs.Add(new Intersection(t1, this));
+        }
+
+        // TODO 给截断的圆柱加上下面的t ...
+        
+        return new List<Intersection> { new Intersection(t0, this), new Intersection(t1, this) };
+    }
+
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    {
+        throw new NotImplementedException();
     }
 }
