@@ -248,23 +248,50 @@ public class Cylinder : Shape
     {
         double x = ray.Origin.X + t * ray.Direction.X;
         double z = ray.Origin.Z + t * ray.Direction.Z;
+        
         return (x * x + z * z) <= 1;
     }
-    
 
     /// <summary>
-    /// 求圆柱体和视线相交的t值
+    /// 将光线和上下两个面的交点加入交点列表中
+    /// </summary>
+    /// <param name="ray">光线</param>
+    /// <param name="xs">交点列表</param>
+    private void IntersectCaps(Ray ray, List<Intersection> xs)
+    {
+        // 判断是否存在上下两个面的交点，若没有闭合或光线的方向和xz轴平面平行则没有
+        if (!Closed || MathUtils.AlmostEqual(ray.Direction.Y, 0.0))
+            return;
+
+        var t0 = (Minimum - ray.Origin.Y) / ray.Direction.Y;
+        if (CheckCap(ray, t0))
+        {
+            xs.Add(new Intersection(t0, this));
+        }
+
+        var t1 = (Maximum - ray.Origin.Y) / ray.Direction.Y;
+        if (CheckCap(ray, t1))
+        {
+            xs.Add(new Intersection(t1, this));
+        }
+    }
+
+    /// <summary>
+    /// 求圆柱体和视线相交的交点
     /// </summary>
     /// <param name="localRay">圆柱体坐标系中的光线</param>
     /// <returns>t值列表</returns>
     public override List<Intersection> LocalIntersect(Ray localRay)
     {
+        var xs = new List<Intersection>();
+        
         var a = localRay.Direction.X * localRay.Direction.X + 
                 localRay.Direction.Z * localRay.Direction.Z;
         
         if (MathUtils.AlmostEqual(a, 0.0))
         {
-            return new List<Intersection>();
+            IntersectCaps(localRay, xs);
+            return xs;
         }
 
         var b = 2 * localRay.Origin.X * localRay.Direction.X +
@@ -276,7 +303,7 @@ public class Cylinder : Shape
         var disc = b * b - 4 * a * c;
         if (disc < 0)
         {
-            return new List<Intersection>();
+            return xs;
         }
 
         var t0 = (-b - Math.Sqrt(disc)) / (2 * a);
@@ -284,15 +311,10 @@ public class Cylinder : Shape
 
         if (t0 > t1)
         {
-            var temp = t1;
-            t0 = t1;
-            t1 = temp;
+            (t0, t1) = (t1, t0);
         }
         
-        // 从无限高的圆柱截取一段
-        var xs = new List<Intersection>();
-
-        // 核实两个交点的y坐标是否都在截断的部分内
+        // 核实两个交点的y坐标是否都在截断的部分内，不在的话就是交在了上下两个面
         var y0 = localRay.Origin.Y + t0 * localRay.Direction.Y;  // 第0个交点坐标的y坐标
         if (this.Minimum < y0 && y0 < this.Maximum)
         {
@@ -305,8 +327,9 @@ public class Cylinder : Shape
             xs.Add(new Intersection(t1, this));
         }
 
+        IntersectCaps(localRay, xs);
 
-        return new List<Intersection> { new Intersection(t0, this), new Intersection(t1, this) };
+        return xs;
     }
 
     public override Tuple4 LocalNormalAt(Tuple4 localPoint)
