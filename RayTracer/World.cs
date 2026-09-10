@@ -337,7 +337,7 @@ public class World
         {
             for (int x = 0; x < Camera.HSize; x++)
             {
-                List<Ray> rays = Camera.RayForPixel(x, y);
+                Ray[] rays = Camera.RayForPixel(x, y);
                 
                 Color colorSum = new Color(0, 0, 0);
                 foreach (var ray in rays)
@@ -345,7 +345,7 @@ public class World
                     colorSum += ColorAt(ray, remaining);
                 }
 
-                Color colorAverage = colorSum / rays.Count;
+                Color colorAverage = colorSum / rays.Length;
                 
                 canvas.WritePixel(x, y, colorAverage);
             }

@@ -231,11 +231,26 @@ public class Cylinder : Shape
     /// </summary>
     public double Minimum { get; set; } = double.NegativeInfinity;
     public double Maximum { get; set; } = double.PositiveInfinity;
+    public bool Closed { get; set; } = false;
 
     public Cylinder()
     {
         Transform = Matrix.Identity(4);
     }
+
+    /// <summary>
+    /// 判断一个交点是否在圆柱体的上下面上
+    /// </summary>
+    /// <param name="ray">光线</param>
+    /// <param name="t">交点t值</param>
+    /// <returns></returns>
+    private bool CheckCap(Ray ray, double t)
+    {
+        double x = ray.Origin.X + t * ray.Direction.X;
+        double z = ray.Origin.Z + t * ray.Direction.Z;
+        return (x * x + z * z) <= 1;
+    }
+    
 
     /// <summary>
     /// 求圆柱体和视线相交的t值
@@ -290,8 +305,7 @@ public class Cylinder : Shape
             xs.Add(new Intersection(t1, this));
         }
 
-        // TODO 给截断的圆柱加上下面的t ...
-        
+
         return new List<Intersection> { new Intersection(t0, this), new Intersection(t1, this) };
     }
 

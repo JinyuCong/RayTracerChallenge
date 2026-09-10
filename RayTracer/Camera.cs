@@ -61,46 +61,41 @@ public class Camera
 
     /// <summary>
     /// 返回穿过画布中某个像素的光线（原点，方向）
+    /// 使用上采样抗锯齿，将像素分为 n * n 网格，向每个网格中心坐标发射光线
     /// </summary>
     /// <param name="px">像素在画布上的横向位置</param>
     /// <param name="py">像素在画布上的纵向位置</param>
+    /// <param name="n">将这个像素分为多少行和列子像素</param>
     /// <returns>穿过画布中这个像素的光线</returns>
-    public List<Ray> RayForPixel(int px, int py)
+    public Ray[] RayForPixel(int px, int py, int n = 2)
     {
-        double xOffset = (px + 0.5) * PixelSize;  // 这个像素到画布左边的距离
-        double yOffset = (py + 0.5) * PixelSize;  // 这个像素到画布上边的距离
+        double subPixelSize = PixelSize / n;  // 子像素边长
 
-        // 这个像素中心在世界中的坐标
-        double middleX = HalfWidth - xOffset;  
-        double middleY = HalfHeight - yOffset;
-
-        double leftX = middleX - 0.5 * PixelSize;
-        double rightX = middleX + 0.5 * PixelSize;
-        double downY = middleY - 0.5 * PixelSize;
-        double upY = middleY + 0.5 * PixelSize;
-        
-        // 像素在世界中坐标
-        Tuple4 pixelMiddle = InverseTransform * Tuple4.Point(middleX, middleY, -1);
-        Tuple4 pixelLeftUp = InverseTransform * Tuple4.Point(leftX, upY, -1);  // 左上角
-        Tuple4 pixelLeftDown = InverseTransform * Tuple4.Point(leftX, downY, -1);  // 左下角
-        Tuple4 pixelRightUp = InverseTransform * Tuple4.Point(rightX, upY, -1);  // 右上角
-        Tuple4 pixelRightDown = InverseTransform * Tuple4.Point(rightX, downY, -1);  // 右下角
+        Ray[] rays = new Ray[n * n];
         
         // 相机原点在世界中坐标
         Tuple4 origin = InverseTransform * Tuple4.Point(0, 0, 0);
-        
-        // 光线方向
-        Tuple4 middleDirection = (pixelMiddle - origin).Normalize();
-        Tuple4 leftUpDirection = (pixelLeftUp - origin).Normalize();
-        Tuple4 leftDownDirection = (pixelLeftDown - origin).Normalize();
-        Tuple4 rightUpDirection = (pixelRightUp - origin).Normalize();
-        Tuple4 rightDownDirection = (pixelRightDown - origin).Normalize();
 
-        return new List<Ray>
+        for (int i = 0; i < n; i++)
         {
-            new Ray(origin, middleDirection), new Ray(origin, leftUpDirection),
-            new Ray(origin, leftDownDirection), new Ray(origin, rightUpDirection),
-            new Ray(origin, rightDownDirection)
-        };
+            for (int j = 0; j < n; j++)
+            {
+                double xOffset = px * PixelSize + (j + 0.5) * subPixelSize;
+                double yOffset = py * PixelSize + (i + 0.5) * subPixelSize;
+                
+                // 这个子像素中心在世界中的坐标
+                double middleX = HalfWidth - xOffset;  
+                double middleY = HalfHeight - yOffset;
+                
+                Tuple4 subPixelMiddle = InverseTransform * Tuple4.Point(middleX, middleY, -1);
+
+                Tuple4 direction = (subPixelMiddle - origin).Normalize();
+                Ray subPixelRay = new Ray(origin, direction);
+
+                rays[i * n + j] = subPixelRay;
+            }
+        }
+
+        return rays;
     }
 }
