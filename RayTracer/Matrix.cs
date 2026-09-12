@@ -12,6 +12,10 @@ public struct Matrix : IEquatable<Matrix>
     public int NumRows { get; }
     public int NumCols { get; }
     
+    /// <summary>
+    /// 初始化矩阵
+    /// </summary>
+    /// <param name="array">数组形式矩阵</param>
     public Matrix(double[,] array)
     {
         _values = array;

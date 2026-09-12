@@ -8,9 +8,14 @@ public struct Tuple4 : IEquatable<Tuple4>
     public double Y { get; }
     public double Z { get; }
     public double W { get; set; }
-
-    public Tuple4(){}
     
+    /// <summary>
+    /// 初始化 tuple4
+    /// </summary>
+    /// <param name="x">x轴分量</param>
+    /// <param name="y">y轴分量</param>
+    /// <param name="z">z轴分量</param>
+    /// <param name="w">0代表向量，1代表点坐标</param>
     public Tuple4(double x, double y, double z, double w)
     {
         X = x;

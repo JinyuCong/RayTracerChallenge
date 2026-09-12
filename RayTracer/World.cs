@@ -1,4 +1,6 @@
-﻿namespace RayTracerChallenge.RayTracer;
+﻿using System.Transactions;
+
+namespace RayTracerChallenge.RayTracer;
 
 public class World
 {
@@ -7,6 +9,12 @@ public class World
     public Camera Camera { get; set; }
     public Color Background { get; set; } = new Color(0, 0, 0);  // 光线什么都没打到时的颜色
     
+    /// <summary>
+    /// 初始化世界
+    /// </summary>
+    /// <param name="lights">光源列表</param>
+    /// <param name="shapes">形状列表</param>
+    /// <param name="camera">相机</param>
     public World(List<Light> lights, List<Shape> shapes, Camera camera)
     {
         Lights = lights;
@@ -27,13 +35,14 @@ public class World
             );
         
         // 物体
-        var s1 =  Sphere.Default();
+        var s1 = new Sphere();
         s1.Material = new Material(
             color: new Color(0.8, 1.0, 0.6), 
             diffuse: 0.7, 
             specular: 0.2);
         
-        var s2 = new Sphere(Tuple4.Point(0, 0, 0),0.5);
+        var s2 = new Sphere();
+        s2.Transform = Transformations.Scaling(0.5, 0.5, 0.5);
         
         //相机
         var camera = new Camera(11, 11, Math.PI / 2);

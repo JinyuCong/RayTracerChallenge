@@ -106,7 +106,7 @@ public static class Challenges
 
         Canvas canvas = new Canvas(canvasPixels, canvasPixels);
         Color color = new Color(1, 0, 0);
-        Sphere sphere = Sphere.Default();
+        Sphere sphere = new Sphere();
 
         sphere.Transform = Transformations.Translation(0.3, -0.4, 0) * Transformations.Scaling(0.5, 1, 1);
         
@@ -134,7 +134,7 @@ public static class Challenges
     public static void LightAndShadingSphere()
     {
         // 初始化球
-        Sphere shape = Sphere.Default();
+        Sphere shape = new Sphere();
         shape.Material.Color = new Color(1, 0.2, 1);
 
         // 初始化光源
@@ -182,12 +182,12 @@ public static class Challenges
     public static void MakingAScene()
     {
         // 地面（拍扁的球）
-        var floor = Sphere.Default();
+        var floor = new Sphere();
         floor.Transform = Transformations.Scaling(10, 0.01, 10);
         floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0);
         
         // 左边的墙
-        var leftWall = Sphere.Default();
+        var leftWall = new Sphere();
         leftWall.Transform = Transformations.Translation(0, 0, 5) *
                              Transformations.RotationY(-45) *
                              Transformations.RotationX(90) *
@@ -195,7 +195,7 @@ public static class Challenges
         leftWall.Material = floor.Material;
 
         // 右边的墙
-        var rightWall = Sphere.Default();
+        var rightWall = new Sphere();
         rightWall.Transform = Transformations.Translation(0, 0, 5) *
                               Transformations.RotationY(45) *
                               Transformations.RotationX(90) *
@@ -203,7 +203,7 @@ public static class Challenges
         rightWall.Material = floor.Material;
 
         // 中间的球
-        var middle = Sphere.Default();
+        var middle = new Sphere();
         middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
         middle.Material = new Material(
             color: new Color(0.1, 1, 0.5),
@@ -211,7 +211,7 @@ public static class Challenges
             specular: 0.3);
         
         // 右边的球
-        var right = Sphere.Default();
+        var right = new Sphere();
         right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
                           Transformations.Scaling(0.5, 0.5, 0.5);
         right.Material = new Material(
@@ -220,7 +220,7 @@ public static class Challenges
             specular: 0.3);
         
         // 左边的球
-        var left = Sphere.Default();
+        var left = new Sphere();
         left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
                          Transformations.Scaling(0.33, 0.33, 0.33);
         left.Material = new Material(
@@ -248,46 +248,46 @@ public static class Challenges
     public static void BarkBark()
     {
         // 背景墙（x = 2）
-        var background = Sphere.Default();
+        var background = new Sphere();
         background.Transform = Transformations.Translation(0, 5, 5) *
                                Transformations.Scaling(0.01, 50, 50);
         background.Material = new Material(color: new Color(0.5, 0.5, 0.5), specular: 0);
 
         // 青色球（画面左侧）
-        var ball1 = Sphere.Default();
+        var ball1 = new Sphere();
         ball1.Transform = Transformations.Translation(5, 4, 2) *
                           Transformations.Scaling(1, 1, 1);
         ball1.Material = new Material(color: new Color(0, 0.9, 0.9), specular: 0.3);
         
         // 蓝
-        var ball2 = Sphere.Default();
+        var ball2 = new Sphere();
         ball2.Transform = Transformations.Translation(5, 5, 3) *
                           Transformations.Scaling(0.5, 0.7, 1);
         ball2.Material = new Material(color: new Color(0.1, 0.1, 0.7), specular: 0.3);
         
         // 黄
-        var ball3 = Sphere.Default();
+        var ball3 = new Sphere();
         ball3.Transform = Transformations.Translation(5, 5.9, 3) *
                           Transformations.RotationX(90) *
                           Transformations.Scaling(0.2, 0.2, 0.5);
         ball3.Material = new Material(color: new Color(1, 0.9, 0), specular: 0.3);
         
         // 绿
-        var ball4 = Sphere.Default();
+        var ball4 = new Sphere();
         ball4.Transform = Transformations.Translation(5, 5.7, 4) *
                           Transformations.RotationX(-30) *
                           Transformations.Scaling(0.2, 0.2, 0.5);
         ball4.Material = new Material(color: new Color(0.2, 0.9, 0.3), specular: 0.3);
         
         // 白
-        var ball5 = Sphere.Default();
+        var ball5 = new Sphere();
         ball5.Transform = Transformations.Translation(5, 5.2, 4.3) *
                           Transformations.RotationX(-20) *
                           Transformations.Scaling(0.2, 0.2, 0.5);
         ball5.Material = new Material(color: new Color(1, 1, 1), specular: 0.3);
         
         // 红
-        var ball6 = Sphere.Default();
+        var ball6 = new Sphere();
         ball6.Transform = Transformations.Translation(5, 5, 4.3) *
                           Transformations.Scaling(0.2, 0.2, 0.5);
         ball6.Material = new Material(color: new Color(1, 0, 0), specular: 0.3);
@@ -345,7 +345,7 @@ public static class Challenges
         ceil.Material = floor.Material;
 
         // 中间的球
-        var middle = Sphere.Default();
+        var middle = new Sphere();
         middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
         middle.Material = new Material(
             color: new Color(0.1, 1, 0.5),
@@ -354,7 +354,7 @@ public static class Challenges
             pattern: pattern);
         
         // 右边的球
-        var right = Sphere.Default();
+        var right = new Sphere();
         right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
                           Transformations.Scaling(0.5, 0.5, 0.5);
         right.Material = new Material(
@@ -363,7 +363,7 @@ public static class Challenges
             specular: 0.3);
         
         // 左边的球
-        var left = Sphere.Default();
+        var left = new Sphere();
         left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
                          Transformations.Scaling(0.33, 0.33, 0.33);
         left.Material = new Material(
@@ -398,7 +398,7 @@ public static class Challenges
         floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0, pattern: pattern);
 
         // 中间的球
-        var middle = Sphere.Default();
+        var middle = new Sphere();
         middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
         middle.Material = new Material(
             color: new Color(0.1, 1, 0.5),
@@ -407,7 +407,7 @@ public static class Challenges
             pattern: pattern);
         
         // 右边的球
-        var right = Sphere.Default();
+        var right = new Sphere();
         right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
                           Transformations.Scaling(0.5, 0.5, 0.5);
         right.Material = new Material(
@@ -416,7 +416,7 @@ public static class Challenges
             specular: 0.3);
         
         // 左边的球
-        var left = Sphere.Default();
+        var left = new Sphere();
         left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
                          Transformations.Scaling(0.33, 0.33, 0.33);
         left.Material = new Material(
@@ -451,7 +451,7 @@ public static class Challenges
             specular: 0, reflective: 0.5, pattern: pattern);
 
         // 中间的球（0.5反射率）
-        var middle = Sphere.Default();
+        var middle = new Sphere();
         middle.Transform = Transformations.Translation(-0.5, 1, 0.5);
         middle.Material = new Material(
             color: new Color(0.1, 1, 0.5),
@@ -460,7 +460,7 @@ public static class Challenges
             reflective: 0.5);
         
         // 右边的球
-        var right = Sphere.Default();
+        var right = new Sphere();
         right.Transform = Transformations.Translation(1.5, 0.5, -0.5) * 
                           Transformations.Scaling(0.5, 0.5, 0.5);
         right.Material = new Material(
@@ -469,7 +469,7 @@ public static class Challenges
             specular: 0.3);
         
         // 左边的球
-        var left = Sphere.Default();
+        var left = new Sphere();
         left.Transform = Transformations.Translation(-1.5, 0.33, -0.75) *
                          Transformations.Scaling(0.33, 0.33, 0.33);
         left.Material = new Material(
@@ -508,7 +508,7 @@ public static class Challenges
         wallPattern.Transform = Transformations.Scaling(15, 1, 1);
         wall.Material.Pattern = wallPattern;
         
-        var ball1 = Sphere.Default();
+        var ball1 = new Sphere();
         ball1.Transform = Transformations.Translation(4, 2, 4) *
                           Transformations.Scaling(2, 2, 2);
         ball1.Material = new Material(
@@ -521,7 +521,7 @@ public static class Challenges
             refractiveIndex: 1.5);
         ball1.CastsShadow = false;
         
-        var ball2 = Sphere.Default();
+        var ball2 = new Sphere();
         ball2.Transform = Transformations.Translation(5, 1, 1);
         ball2.Material = new Material(
             color: new Color(0, 0.7, 0.6),
@@ -534,7 +534,7 @@ public static class Challenges
             refractiveIndex: 1.5);
         ball2.CastsShadow = false;
         
-        var ball3 = Sphere.Default();
+        var ball3 = new Sphere();
         ball3.Transform = Transformations.Translation(-1, 3, 1) *
                           Transformations.Scaling(3, 3, 3);
         ball3.Material = new Material(
@@ -547,7 +547,7 @@ public static class Challenges
             refractiveIndex: 1.5);
         ball3.CastsShadow = false;
         
-        var ball4 = Sphere.Default();
+        var ball4 = new Sphere();
         ball4.Transform = Transformations.Translation(1, 1, 6);
         ball4.Material = new Material(
             color: new Color(0, 0.6, 1),
@@ -648,7 +648,7 @@ public static class Challenges
                                 Transformations.RotationX(90);
         
         // 球
-        var sphere = Sphere.Default();
+        var sphere = new Sphere();
         sphere.Material = new Material(
             color: new Color(0.373, 0.404, 0.550),
             diffuse: 0.2,
@@ -739,4 +739,124 @@ public static class Challenges
         var canvas = w.Render();
         canvas.SavePng("./cover_with_anti_alias.png");
     }
+
+    public static void IceCream()
+    {
+        var camera = new Camera(800, 400, Math.PI / 3);
+        camera.Transform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 2.2, -6), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+
+        var floor = new Plane();
+        floor.Material.Color = new Color(0.9, 0.9, 0.9);
+
+        var wall = new Plane();
+        wall.Transform = Transformations.Translation(0, 0, 5) *
+                         Transformations.RotationX(90);
+        wall.Material.Color = new Color(0.85, 0.87, 0.9);
+
+        var cone = new Cone();
+        cone.Transform = Transformations.RotationZ(-20) *
+                         Transformations.Scaling(0.3, 1, 0.3);
+        cone.Minimum = 0;
+        cone.Maximum = 1;
+        cone.Closed = true;
+        cone.Material.Color = new Color(0.89, 0.76, 0.76);
+
+        var ball1 = new Sphere();
+        ball1.Transform = Transformations.Translation(0.4, 1.07, 0) *
+                          Transformations.Scaling(0.35, 0.35, 0.35);
+                          
+        ball1.Material.Color = new Color(1, 0.35, 0.35);
+
+        var ball2 = new Sphere();
+        ball2.Transform = Transformations.Translation(0.5, 1.45, 0) *
+                          Transformations.Scaling(0.25, 0.25, 0.25);
+        
+        ball2.Material.Color = new Color(0.34, 1, 0.5);
+
+        var shapes = new List<Shape>
+        {
+            floor, wall, cone, ball1, ball2
+        };
+        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+
+        var world = new World(lights, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./ice_cream.png");
+
+    }
+
+
+    private static Sphere HexagonCorner()
+    {
+        var corner = new Sphere();
+        corner.Transform = Transformations.Translation(0, 0, -1) *
+                           Transformations.Scaling(0.25, 0.25, 0.25);
+        return corner;
+    }
+
+    private static Cylinder HexagonEdge()
+    {
+        var edge = new Cylinder();
+        edge.Minimum = 0;
+        edge.Maximum = 1;
+        edge.Transform = Transformations.Translation(0, 0, -1) *
+                         Transformations.RotationY(-30) *
+                         Transformations.RotationZ(-90) *
+                         Transformations.Scaling(0.25, 1, 0.25);
+        return edge;
+    }
+
+    private static Group HexagonSide()
+    {
+        var side = new Group();
+        
+        side.AddChild(HexagonCorner());
+        side.AddChild(HexagonEdge());
+
+        return side;
+    }
+
+    private static Group Hexagon()
+    {
+        var hex = new Group();
+
+        for (int n = 0; n < 6; n++)
+        {
+            var side = HexagonSide();
+            side.Transform = Transformations.RotationY(n * 60);
+            hex.AddChild(side);
+        }
+
+        return hex;
+    }
+
+    public static void RenderHexagon()
+    {
+        var camera = new Camera(1000, 1000, Math.PI / 3);
+        camera.Transform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 2.2, -6), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        
+        var floor = new Plane();
+        floor.Material.Color = new Color(0.9, 0.9, 0.9);
+
+        var hexagon = Hexagon();
+        hexagon.Transform = Transformations.Translation(0, 2, 0) *
+                            Transformations.RotationX(60);
+        
+        var shapes = new List<Shape>
+        {
+            floor, hexagon
+        };
+        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+
+        var world = new World(lights, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./hexagon.png");
+    }
+    
 }

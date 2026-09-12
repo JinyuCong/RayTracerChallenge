@@ -2,16 +2,28 @@
 
 public class Material
 {
-    public Color Color { get; set; }  // 材质颜色
-    public double Ambient { get; set; }  // 环境光强度
-    public double Diffuse { get; set; }  // 漫反射强度
-    public double Specular { get; set; }  // 镜面反射强度
-    public double Shininess { get; set; }  // 光泽度
-    public Pattern? Pattern { get; set; }  // 图案
-    public double Reflective { get; set; }  // 反射率
-    public double Transparency { get; set; }  // 透明度
-    public double RefractiveIndex { get; set; }  // 折射率
+    public Color Color { get; set; }
+    public double Ambient { get; set; }
+    public double Diffuse { get; set; }
+    public double Specular { get; set; } 
+    public double Shininess { get; set; }
+    public Pattern? Pattern { get; set; }
+    public double Reflective { get; set; }
+    public double Transparency { get; set; }
+    public double RefractiveIndex { get; set; }
 
+    /// <summary>
+    /// 初始化材质
+    /// </summary>
+    /// <param name="color">颜色</param>
+    /// <param name="ambient">环境光强度</param>
+    /// <param name="diffuse">漫反射强度</param>
+    /// <param name="specular">镜面反射强度</param>
+    /// <param name="shininess">光泽度</param>
+    /// <param name="pattern">图案</param>
+    /// <param name="reflective">反射率</param>
+    /// <param name="transparency">透明度</param>
+    /// <param name="refractiveIndex">折射率</param>
     public Material(
         Color? color = null, 
         double ambient = 0.1, 

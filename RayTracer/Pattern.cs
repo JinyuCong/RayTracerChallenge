@@ -25,10 +25,10 @@ public abstract class Pattern
     public Color PatternAtShape(Shape obj, Tuple4 worldPoint)
     {
         // 将世界坐标转换为物体坐标
-        Tuple4 objectPoint = obj.InverseTransform * worldPoint;
+        Tuple4 objectPoint = obj.WorldToObject(worldPoint);
         
         // 将物体坐标转换为图案坐标
-        Tuple4 patternPoint = this.InverseTransform * objectPoint;
+        Tuple4 patternPoint = InverseTransform * objectPoint;
         return LocalColorAt(patternPoint);
     }
 

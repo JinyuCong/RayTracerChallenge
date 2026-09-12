@@ -10,6 +10,11 @@ public class Ray
     public Tuple4 Origin { get; }
     public Tuple4 Direction { get; }
 
+    /// <summary>
+    /// 初始化光线
+    /// </summary>
+    /// <param name="origin">光线源头（点）</param>
+    /// <param name="direction">光线方向（向量）</param>
     public Ray(Tuple4 origin, Tuple4 direction)
     {
         Origin = origin;
@@ -19,7 +24,7 @@ public class Ray
     /// <summary>
     /// 计算一道光线经过t后到达的点，t为变量
     /// </summary>
-    /// <param name="t">时间</param>
+    /// <param name="t">变量特征值</param>
     /// <returns>到达的点</returns>
     public Tuple4 Position(double t)
     {
