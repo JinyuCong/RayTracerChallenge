@@ -515,6 +515,8 @@ public class Group : Shape
 {
     private readonly List<Shape> _children = new List<Shape>();
 
+    public List<Shape> Children => _children;
+
     public Group()
     {
         Transform = Matrix.Identity(4);
@@ -577,6 +579,7 @@ public class Triangle : Shape
         E1 = p2 - p1;
         E2 = p3 - p1;
         Normal = E2.Cross(E1).Normalize();  // 法向量与两个边向量正交
+        Transform = Matrix.Identity(4);
     }
 
     /// <summary>

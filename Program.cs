@@ -9,6 +9,6 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        var objParser = new ObjParser("./testObj.obj");
+        Challenges.TeaPot();
     }
 }

@@ -858,5 +858,30 @@ public static class Challenges
         var canvas = world.Render();
         canvas.SavePng("./hexagon.png");
     }
-    
+
+    public static void TeaPot()
+    {
+        var camera = new Camera(500, 500, Math.PI / 3);
+        camera.Transform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 2.2, -6), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        
+        var floor = new Plane();
+        floor.Material.Color = new Color(0.9, 0.9, 0.9);
+
+        var objParser = new ObjParser("./teapot.obj.txt");
+        var teaPot = objParser.RootGroup;
+        
+        var shapes = new List<Shape>
+        {
+            floor, teaPot
+        };
+        
+        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+
+        var world = new World(lights, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./teapot.png");
+    }
 }
