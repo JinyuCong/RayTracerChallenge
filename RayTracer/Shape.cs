@@ -33,17 +33,17 @@ public abstract class Shape
     /// <summary>
     /// 所有形状共用的求世界坐标法向量的逻辑
     /// </summary>
-    /// <param name="worldPoint"></param>
+    /// <param name="worldPoint">世界中的一个点</param>
     /// <returns></returns>
-    public Tuple4 NormalAt(Tuple4 worldPoint)
+    public Tuple4 NormalAt(Tuple4 worldPoint, Intersection hit)
     {
         var localPoint = WorldToObject(worldPoint);  // 世界坐标系的点转换为物体坐标系点
-        var localNormal = LocalNormalAt(localPoint);  // 计算物体本地法向量
+        var localNormal = LocalNormalAt(localPoint, hit);  // 计算物体本地法向量
         return NormalToWorld(localNormal);  // 本地法向量转换到世界坐标
     }
 
     public abstract List<Intersection> LocalIntersect(Ray localRay);
-    public abstract Tuple4 LocalNormalAt(Tuple4 localPoint);
+    public abstract Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit);
 
     /// <summary>
     /// 递归地将世界坐标中的点变换到物体本地坐标点
@@ -78,7 +78,8 @@ public abstract class Shape
 
         return normal;
     }
-    
+
+    public abstract Bounds Bounds();
 }
 
 
@@ -126,9 +127,18 @@ public class Sphere : Shape
     /// </summary>
     /// <param name="localPoint">球体坐标系中一点</param>
     /// <returns>球体坐标系中这个点的法向量</returns>
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         return localPoint;  // 物体坐标系点减去物体坐标系球中心
+    }
+
+    /// <summary>
+    /// 球的包围盒
+    /// </summary>
+    /// <returns></returns>
+    public override Bounds Bounds()
+    {
+        return new Bounds(Tuple4.Point(-1, -1, -1), Tuple4.Point(1, 1, 1));
     }
 }
 
@@ -155,9 +165,20 @@ public class Plane : Shape
         return new List<Intersection> { new Intersection(t, this) };
     }
 
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         return Tuple4.Vector(0, 1, 0);
+    }
+
+    /// <summary>
+    /// 平面的包围盒
+    /// </summary>
+    /// <returns></returns>
+    public override Bounds Bounds()
+    {
+        return new Bounds(
+            Tuple4.Point(double.NegativeInfinity, 0, double.NegativeInfinity),
+            Tuple4.Point(double.PositiveInfinity, 0, double.PositiveInfinity));
     }
 }
 
@@ -171,10 +192,18 @@ public class Cube : Shape
         Transform = Matrix.Identity(4);
     }
 
-    private Tuple<double, double> CheckAxis(double origin, double direction)
+    /// <summary>
+    /// 检测每个轴的光线和轴的交点
+    /// </summary>
+    /// <param name="origin">光线原点</param>
+    /// <param name="direction">光线方向</param>
+    /// <param name="min">这个轴的最小点</param>
+    /// <param name="max">这个轴的最大点</param>
+    /// <returns></returns>
+    public static Tuple<double, double> CheckAxis(double origin, double direction, double min, double max)
     {
-        double tMinNumerator = -1 - origin;
-        double tMaxNumerator = 1 - origin;
+        double tMinNumerator = min - origin;
+        double tMaxNumerator = max - origin;
 
         double tMin;
         double tMax;
@@ -191,10 +220,7 @@ public class Cube : Shape
 
         if (tMin > tMax)
         {
-            double temp;
-            temp = tMin;
-            tMin = tMax;
-            tMax = temp;
+            (tMin, tMax) = (tMax, tMin);
         }
 
         return new Tuple<double, double>(tMin, tMax);
@@ -202,9 +228,9 @@ public class Cube : Shape
     
     public override List<Intersection> LocalIntersect(Ray localRay)
     {
-        var (xTMin, xTMax) = CheckAxis(localRay.Origin.X, localRay.Direction.X);
-        var (yTMin, yTMax) = CheckAxis(localRay.Origin.Y, localRay.Direction.Y);
-        var (zTMin, zTMax) = CheckAxis(localRay.Origin.Z, localRay.Direction.Z);
+        var (xTMin, xTMax) = CheckAxis(localRay.Origin.X, localRay.Direction.X, -1, 1);
+        var (yTMin, yTMax) = CheckAxis(localRay.Origin.Y, localRay.Direction.Y, -1, 1);
+        var (zTMin, zTMax) = CheckAxis(localRay.Origin.Z, localRay.Direction.Z, -1, 1);
 
         var tMin = new List<double> { xTMin, yTMin, zTMin }.Max();
         var tMax = new List<double> { xTMax, yTMax, zTMax }.Min();
@@ -215,7 +241,7 @@ public class Cube : Shape
         return new List<Intersection> {new Intersection(tMin, this), new Intersection(tMax, this)};
     }
 
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         var maxC = new List<double> { Math.Abs(localPoint.X), Math.Abs(localPoint.Y), Math.Abs(localPoint.Z) }.Max();
 
@@ -230,6 +256,15 @@ public class Cube : Shape
         }
 
         return Tuple4.Vector(0, 0, localPoint.Z);
+    }
+
+    /// <summary>
+    /// 正方体的包围盒
+    /// </summary>
+    /// <returns></returns>
+    public override Bounds Bounds()
+    {
+        return new Bounds(Tuple4.Point(-1, -1, -1), Tuple4.Point(1, 1, 1));
     }
 }
 
@@ -350,7 +385,7 @@ public class Cylinder : Shape
     /// </summary>
     /// <param name="localPoint">交点坐标</param>
     /// <returns></returns>
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         var dist = localPoint.X * localPoint.X + localPoint.Z * localPoint.Z;
 
@@ -368,6 +403,15 @@ public class Cylinder : Shape
 
         return Tuple4.Vector(localPoint.X, 0, localPoint.Z);
     }
+
+    /// <summary>
+    /// 圆柱体的包围盒
+    /// </summary>
+    /// <returns></returns>
+    public override Bounds Bounds()
+    {
+        return new Bounds(Tuple4.Point(-1, Minimum, -1), Tuple4.Point(1, Maximum, 1));
+    }
 }
 
 
@@ -378,7 +422,7 @@ public class Cone : Shape
 {
     public double Minimum { get; set; } = double.NegativeInfinity;
     public double Maximum { get; set; } = double.PositiveInfinity;
-    public bool Closed { get; set; } = false;
+    public bool Closed { get; set; }
     
     public Cone()
     {
@@ -485,7 +529,7 @@ public class Cone : Shape
     /// </summary>
     /// <param name="localPoint">交点坐标</param>
     /// <returns></returns>
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         var dist = localPoint.X * localPoint.X + localPoint.Z * localPoint.Z;
 
@@ -505,6 +549,16 @@ public class Cone : Shape
 
         return Tuple4.Vector(localPoint.X, y, localPoint.Z);
     }
+
+    /// <summary>
+    /// 圆锥的包围盒
+    /// </summary>
+    /// <returns></returns>
+    public override Bounds Bounds()
+    {
+        double r = Math.Max(Math.Abs(Minimum), Math.Abs(Maximum));  // xz平面上的极值为较大的那个底面的半径
+        return new Bounds(Tuple4.Point(-r, Minimum, -r), Tuple4.Point(r, Maximum, r));
+    }
 }
 
 
@@ -514,6 +568,7 @@ public class Cone : Shape
 public class Group : Shape
 {
     private readonly List<Shape> _children = new List<Shape>();
+    private Bounds? _boundsCache;
 
     public List<Shape> Children => _children;
 
@@ -530,11 +585,17 @@ public class Group : Shape
     {
         s.Parent = this;
         _children.Add(s);
+        InvalidateBounds();
     }
     
     public override List<Intersection> LocalIntersect(Ray localRay)
     {
         var xs = new List<Intersection>();
+        
+        if (!BoundsHit(localRay))
+        {
+            return xs;
+        }
 
         foreach (var child in _children)
         {
@@ -548,10 +609,94 @@ public class Group : Shape
         xs.Sort((a, b) => a.T.CompareTo(b.T));
         return xs;
     }
+    
+    private bool BoundsHit(Ray ray)
+    {
+        var b = Bounds();
 
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+        // 含无穷大的包围盒剪不掉任何东西，而且会算出 NaN，直接放行
+        if (!IsFinite(b)) return true;
+
+        var (xtMin, xtMax) = Cube.CheckAxis(ray.Origin.X, ray.Direction.X, b.MinPoint.X, b.MaxPoint.X);
+        var (ytMin, ytMax) = Cube.CheckAxis(ray.Origin.Y, ray.Direction.Y, b.MinPoint.Y, b.MaxPoint.Y);
+        var (ztMin, ztMax) = Cube.CheckAxis(ray.Origin.Z, ray.Direction.Z, b.MinPoint.Z, b.MaxPoint.Z);
+
+        var tMin = Math.Max(xtMin, Math.Max(ytMin, ztMin));
+        var tMax = Math.Min(xtMax, Math.Min(ytMax, ztMax));
+
+        return tMin <= tMax;
+    }
+
+    /// <summary>
+    /// 检查一个边框是否是无限的
+    /// </summary>
+    /// <param name="b">边框</param>
+    /// <returns></returns>
+    private static bool IsFinite(Bounds b)
+    {
+        return double.IsFinite(b.MinPoint.X) && double.IsFinite(b.MinPoint.Y) && double.IsFinite(b.MinPoint.Z) && 
+               double.IsFinite(b.MaxPoint.X) && double.IsFinite(b.MaxPoint.Y) && double.IsFinite(b.MaxPoint.Z);
+    }
+        
+
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         throw new NotImplementedException();
+    }
+    
+    /// <summary>
+    /// 添加了孩子之后就无效化当前的边框
+    /// </summary>
+    private void InvalidateBounds()
+    {
+        _boundsCache = null;
+        (Parent as Group)?.InvalidateBounds();   // 往上传播
+    }
+
+    /// <summary>
+    /// 形状组合的包围框
+    /// </summary>
+    /// <returns></returns>
+    private Bounds ComputeBounds()
+    {
+        double maxX = double.NegativeInfinity;
+        double maxY = double.NegativeInfinity;
+        double maxZ = double.NegativeInfinity;
+        
+        double minX = double.PositiveInfinity;
+        double minY = double.PositiveInfinity;
+        double minZ = double.PositiveInfinity;
+        
+        foreach (var child in _children)
+        {
+            Bounds b = child.Bounds();  // 递归每个孩子的包围框
+
+            // 遍历孩子包围框的八个顶点对每个顶点做孩子本身的变换
+            foreach (var x in new[] { b.MaxPoint.X, b.MinPoint.X })
+            foreach (var y in new[] { b.MaxPoint.Y, b.MinPoint.Y })
+            foreach (var z in new[] { b.MaxPoint.Z, b.MinPoint.Z })
+            {
+                var transformedPoint = child.Transform * Tuple4.Point(x, y, z);  // 变换到group坐标系的顶点
+                // 更新每个轴的最大顶点坐标
+                maxX = Math.Max(transformedPoint.X, maxX);
+                maxY = Math.Max(transformedPoint.Y, maxY);
+                maxZ = Math.Max(transformedPoint.Z, maxZ);
+                
+                // 更新每个轴的最小顶点坐标
+                minX = Math.Min(transformedPoint.X, minX);
+                minY = Math.Min(transformedPoint.Y, minY);
+                minZ = Math.Min(transformedPoint.Z, minZ);
+            }
+        }
+
+        return new Bounds(
+            Tuple4.Point(minX, minY, minZ),
+            Tuple4.Point(maxX, maxY, maxZ));
+    }
+
+    public override Bounds Bounds()
+    {
+        return _boundsCache ??= ComputeBounds();
     }
 }
 
@@ -616,8 +761,97 @@ public class Triangle : Shape
         return new List<Intersection> { new Intersection(t, this) };
     }
 
-    public override Tuple4 LocalNormalAt(Tuple4 localPoint)
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
         return Normal;
+    }
+
+    /// <summary>
+    /// 三角形包围框
+    /// </summary>
+    /// <returns></returns>
+    public override Bounds Bounds()
+    {
+        var pts = new[] { P1, P2, P3 };
+        return new Bounds(
+            Tuple4.Point(pts.Min(p => p.X), pts.Min(p => p.Y), pts.Min(p => p.Z)),
+            Tuple4.Point(pts.Max(p => p.X), pts.Max(p => p.Y), pts.Max(p => p.Z)));
+    }
+}
+
+
+public class SmoothTriangle : Shape
+{
+    public Tuple4 P1 { get; set; }
+    public Tuple4 P2 { get; set; }
+    public Tuple4 P3 { get; set; }
+    public Tuple4 N1 { get; set; }
+    public Tuple4 N2 { get; set; }
+    public Tuple4 N3 { get; set; }
+    public Tuple4 E1 { get; set; }
+    public Tuple4 E2 { get; set; }
+    
+    public SmoothTriangle(
+        Tuple4 p1, Tuple4 p2, Tuple4 p3, 
+        Tuple4 n1, Tuple4 n2, Tuple4 n3)
+    {
+        P1 = p1;
+        P2 = p2;
+        P3 = p3;
+        N1 = n1;
+        N2 = n2;
+        N3 = n3;
+        E1 = p2 - p1;
+        E2 = p3 - p1;
+        Transform = Matrix.Identity(4);
+    }
+    
+    public override List<Intersection> LocalIntersect(Ray localRay)
+    {
+        var dirCrossE2 = localRay.Direction.Cross(E2);
+        var det = E1.Dot(dirCrossE2);
+        if (Math.Abs(det) < MathUtils.Epsilon)
+        {
+            return new List<Intersection>();
+        }
+
+        var f = 1.0 / det;
+        var p1ToOrigin = localRay.Origin - P1;
+        var u = f * p1ToOrigin.Dot(dirCrossE2);
+        if (u < 0 || u > 1)
+        {
+            return new List<Intersection>();
+        }
+
+        var originCrossE1 = p1ToOrigin.Cross(E1);
+        var v = f * localRay.Direction.Dot(originCrossE1);
+        if (v < 0 || u + v > 1)
+        {
+            return new List<Intersection>();
+        }
+
+        var t = f * E2.Dot(originCrossE1);
+        
+        // 添加u和v
+        var intersection = new Intersection(t, this);
+        intersection.U = u;
+        intersection.V = v;
+        
+        return new List<Intersection> { intersection };
+    }
+
+    public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
+    {
+        return N2 * hit.U +
+               N3 * hit.V +
+               N1 * (1 - hit.U - hit.V);
+    }
+    
+    public override Bounds Bounds()
+    {
+        var pts = new[] { P1, P2, P3 };
+        return new Bounds(
+            Tuple4.Point(pts.Min(p => p.X), pts.Min(p => p.Y), pts.Min(p => p.Z)),
+            Tuple4.Point(pts.Max(p => p.X), pts.Max(p => p.Y), pts.Max(p => p.Z)));
     }
 }

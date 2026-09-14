@@ -168,7 +168,7 @@ public static class Challenges
                 if (intersection is not null)
                 {
                     var hitPoint = ray.Position(intersection.T);
-                    var normal = shape.NormalAt(hitPoint);
+                    var normal = shape.NormalAt(hitPoint, intersection);
                     var eyeV = -ray.Direction;
 
                     var color = World.Lighting(shape.Material, shape, new List<Light>{ light }, hitPoint, eyeV, normal, new List<bool>());
@@ -883,5 +883,31 @@ public static class Challenges
         var world = new World(lights, shapes, camera);
         var canvas = world.Render();
         canvas.SavePng("./teapot.png");
+    }
+
+    public static void PlasticCup()
+    {
+        var camera = new Camera(500, 500, Math.PI / 3);
+        camera.Transform = Transformations.ViewTransformation(
+            Tuple4.Point(0, 2.2, -6), 
+            Tuple4.Point(0, 1, 0), 
+            Tuple4.Vector(0, 1, 0));
+        
+        var floor = new Plane();
+        floor.Material.Color = new Color(0.9, 0.9, 0.9);
+        
+        var objParser = new ObjParser("./Plastic_Cup.obj");
+        var cup = objParser.RootGroup;
+        
+        var shapes = new List<Shape>
+        {
+            floor, cup
+        };
+        
+        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+        
+        var world = new World(lights, shapes, camera);
+        var canvas = world.Render();
+        canvas.SavePng("./plastic_cup.png");
     }
 }

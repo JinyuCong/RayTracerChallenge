@@ -58,13 +58,6 @@ dotnet build -c Release
 dotnet run -c Release
 ```
 
-Release mode matters. Debug builds run several times slower because the JIT
-skips most optimizations.
-
-```bash
-dotnet test
-```
-
 ## Writing a scene
 
 ```csharp
@@ -77,7 +70,7 @@ floor.Material.Pattern = new CheckerPattern(
     new Color(0.15, 0.15, 0.15),
     new Color(0.85, 0.85, 0.85));
  
-var glassBall = Sphere.Default();
+var glassBall = new Sphere();
 glassBall.Transform = Transformations.Translation(-0.5, 1, 0.5);
 glassBall.Material = new Material(
     color: new Color(1, 1, 1),
@@ -160,13 +153,6 @@ transforms away from world space. Rays descend the hierarchy automatically
 through recursive intersection, but normals need an explicit walk back up,
 applying each inverse transpose in turn.
 
-## Not implemented
-
-- Bounding volume hierarchies. Group intersection currently tests every child,
-  which is fine for tens of shapes and painful for imported meshes.
-- Constructive solid geometry (union, intersection, difference).
-- Smooth triangles with interpolated vertex normals.
-- Texture mapping and UV coordinates.
 ## References
 
 - Jamis Buck, *The Ray Tracer Challenge*, Pragmatic Bookshelf, 2019

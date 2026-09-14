@@ -2,6 +2,8 @@
 
 public class Intersection
 {
+    public double U { get; set; }
+    public double V { get; set; }
     public double T { get; }
     public Shape Object { get; }
     
@@ -48,7 +50,7 @@ public class Intersection
     {
         var hitPoint = ray.Position(T);  // 计算这个交点的世界坐标
         var eyeV = -ray.Direction;  // 计算视线向量
-        var normalV = Object.NormalAt(hitPoint);  // 计算这个交点的法向量
+        var normalV = Object.NormalAt(hitPoint, this);  // 计算这个交点的法向量
         bool inside;  // 判断视线原点是否在物体内
         
         if (eyeV.Dot(normalV) < 0)
