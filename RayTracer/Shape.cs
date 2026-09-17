@@ -104,7 +104,7 @@ public class Sphere : Shape
     /// <returns>包含Intersection类的数组，长度可为0，1，2</returns>
     public override List<Intersection> LocalIntersect(Ray localRay)
     {
-        Tuple4 sphereToRay = localRay.Origin;
+        Tuple4 sphereToRay = localRay.Origin - Tuple4.Point(0, 0, 0);
         
         double a = localRay.Direction.Dot(localRay.Direction);
         double b = 2 * localRay.Direction.Dot(sphereToRay);
@@ -129,7 +129,7 @@ public class Sphere : Shape
     /// <returns>球体坐标系中这个点的法向量</returns>
     public override Tuple4 LocalNormalAt(Tuple4 localPoint, Intersection hit)
     {
-        return localPoint;  // 物体坐标系点减去物体坐标系球中心
+        return localPoint - Tuple4.Point(0, 0, 0);  // 物体坐标系点减去物体坐标系球中心
     }
 
     /// <summary>

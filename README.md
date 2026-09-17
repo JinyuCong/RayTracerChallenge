@@ -132,7 +132,6 @@ The book's cover with anti-alias
 
 Teapot model
 
-
 ## Notes on the implementation
 
 A few places where I deviated from the book or had to work something out:
@@ -142,6 +141,11 @@ list means the ambient term has to move outside the per-light loop — otherwise
 it accumulates once per light and objects get brighter as you add lights, which
 is not how ambient light behaves. Shadow testing is also per-light: a point can
 be occluded from one source and lit by another.
+
+**Area lights.** Added area light that is basically a rectangle surface that 
+projects multiple light rays to a world point. Which can cast a more smooth shadow
+edge by adding some random blur. We can define the number of the rays, 2 $\times$ 2 = 4 
+rays by default.
 
 **Normal transformation.** Normals transform by the inverse transpose, not the
 transformation matrix. With rotation and uniform scaling the two agree, so the

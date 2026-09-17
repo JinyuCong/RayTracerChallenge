@@ -29,8 +29,8 @@ public class World
     public static World Default()
     {
         // 光源
-        var light = new Light(
-            Tuple4.Point(-10, 10, -10), 
+        var light = new PointLight(
+            Tuple4.Point(-10, 10, -10),
             new Color(1, 1, 1)
             );
         
@@ -86,55 +86,47 @@ public class World
     /// <param name="point">视线接触到的点(Tuple4)</param>
     /// <param name="eyeV">视线向量(Tuple4)</param>
     /// <param name="normalV">点对应的法向量(Tuple4)</param>
-    /// <param name="shadowFlags">每个光源对应一个"是否被遮挡"的标记</param>
     /// <returns></returns>
-    public static Color Lighting(
+    public Color Lighting(
         Material material, 
         Shape obj,
         List<Light> lights, 
         Tuple4 point, 
         Tuple4 eyeV, 
-        Tuple4 normalV,
-        List<bool> shadowFlags)
+        Tuple4 normalV)
     {
         Color black = new Color(0, 0, 0);
         Color totalDiffuseSpecular = new Color(0, 0, 0);
-        Color color = (material.Pattern is not null) ? material.Pattern.PatternAtShape(obj, point) : material.Color;
+        Color color = material.Pattern is not null 
+            ? material.Pattern.PatternAtShape(obj, point) 
+            : material.Color;
 
         Color ambient = color * material.Ambient;
 
-        for (int i = 0; i < lights.Count; i++)
+        foreach (var light in Lights)
         {
-            var light = lights[i];
-            bool inShadow = shadowFlags[i];
-
-            if (inShadow)
-            {
-                continue;
-            }
+            Color sum = black;
             
             // 结合材质颜色和光源颜色
             Color effectiveColor = color * light.Intensity;
 
-            // 找到交点到光源的向量
-            Tuple4 lightV = (light.Position - point).Normalize();
+            for (int v = 0; v < light.VSteps; v++)
+            for (int u = 0; u < light.USteps; u++)
+            {
+                var lightPos = light.PointOnLight(u, v);
+                if (IsShadowed(lightPos, point)) continue;
 
-            // 入射光线和表面法向量的余弦相似度
-            double lightDotNormal = lightV.Dot(normalV);
-            
-            Color diffuse;
-            Color specular;
+                // 找到交点到光源的向量
+                Tuple4 lightV = (lightPos - point).Normalize();
+    
+                // 入射光线和表面法向量的余弦相似度
+                double lightDotNormal = lightV.Dot(normalV);
         
-            // 相似度为负表示法向量和入射光方向相反（这个面不能被光照到），颜色为黑色
-            if (lightDotNormal < 0)
-            {
-                diffuse = black;
-                specular = black;
-            }
-            else  // 相似度不为负的情况
-            {
+                // 相似度为负表示法向量和入射光方向相反（这个面不能被光照到），颜色为黑色
+                if (lightDotNormal < 0) continue;
+
                 // 表面颜色乘上散射强度和余弦相似度，相似度越大表明这个面越靠近光源
-                diffuse = effectiveColor * material.Diffuse * lightDotNormal;
+                sum += effectiveColor * material.Diffuse * lightDotNormal;
 
                 // reflect_dot_eye represents the cosine of the angle between the
                 // reflection vector and the eye vector. A negative number means the
@@ -142,34 +134,29 @@ public class World
                 Tuple4 reflectV = (-lightV).Reflect(normalV);
                 double reflectDotEye = reflectV.Dot(eyeV);
 
-                if (reflectDotEye <= 0)
-                {
-                    specular = black;
-                }
-                else
+                if (reflectDotEye > 0)
                 {
                     // compute the specular contribution
                     double factor = Math.Pow(reflectDotEye, material.Shininess);
-                    specular = light.Intensity * material.Specular * factor;
+                    sum += light.Intensity * material.Specular * factor;
                 }
             }
 
-            totalDiffuseSpecular += diffuse + specular;
+            totalDiffuseSpecular += sum / light.Samples;
         }
-        
         return ambient + totalDiffuseSpecular;
     }
     
     /// <summary>
     /// 用于判断世界中的一个点是否被物体遮挡（在阴影中）
     /// </summary>
-    /// <param name="light">世界中的一个光源</param>
+    /// <param name="lightPos">世界中的一个光源</param>
     /// <param name="point">世界中的一个点</param>
     /// <returns>在阴影中 — true，不在阴影中 — false</returns>
-    public bool IsShadowed(Light light, Tuple4 point)
+    public bool IsShadowed(Tuple4 lightPos, Tuple4 point)
     {
         // 光线向量
-        Tuple4 v = light.Position - point;
+        Tuple4 v = lightPos - point;
         
         // 光源到这个点的距离
         double distance = v.Magnitude();
@@ -185,7 +172,8 @@ public class World
             .ToList();
         
         Intersection? hit = Intersection.Hit(intersections);
-        return (hit is not null && hit.T < distance);
+
+        return hit is not null && hit.T < distance;
     }
 
     /// <summary>
@@ -306,18 +294,10 @@ public class World
     /// <returns>点的颜色(Color)</returns>
     public Color ShadeHit(Computation comps, int remaining)
     {
-        List<bool> shadowFlags = new List<bool> ();  // 这个点对于世界中所有光源是否处在阴影中的列表
-
-        foreach (var light in Lights)
-        {
-            bool inShadow = IsShadowed(light, comps.OverPoint);
-            shadowFlags.Add(inShadow);
-        }
-            
         Color surface = Lighting(  // 计算这个像素物体表面本来的颜色
             comps.Object.Material, comps.Object, 
             this.Lights, comps.OverPoint, comps.EyeV, 
-            comps.NormalV, shadowFlags);
+            comps.NormalV);
         Color reflected = ReflectedColor(comps, remaining);  // 计算反射给这个点叠加的颜色
         Color refracted = RefractedColor(comps, remaining);  // 计算折射给这个点叠加的颜色
 

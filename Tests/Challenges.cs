@@ -1,4 +1,6 @@
-﻿namespace RayTracerChallenge.Tests;
+﻿using SixLabors.ImageSharp;
+
+namespace RayTracerChallenge.Tests;
 
 using RayTracer;
 
@@ -131,53 +133,53 @@ public static class Challenges
         }
     }
 
-    public static void LightAndShadingSphere()
-    {
-        // 初始化球
-        Sphere shape = new Sphere();
-        shape.Material.Color = new Color(1, 0.2, 1);
-
-        // 初始化光源
-        var lightPosition = Tuple4.Point(-10, 10, -10);
-        var lightColor = new Color(1, 1, 1);
-        var light = new Light(lightPosition, lightColor);
-        
-        // 初始化画布
-        int canvasPixels = 500;
-        Canvas canvas = new Canvas(canvasPixels, canvasPixels);
-        double wallSize = 4;
-        double wallZ = 3;
-        double pixelSize = wallSize / canvasPixels;
-        double half = wallSize / 2;
-        
-        // 初始化视线原点
-        var rayOrigin = Tuple4.Point(0, 0, -5);
-
-        for (int y = 0; y < canvas.Height; y++)
-        {
-            double worldY = half - pixelSize * y;  // 计算这个像素在世界中的y坐标
-            for (int x = 0; x < canvas.Width; x++)
-            {
-                double worldX = -half + pixelSize * x;  // 计算这个像素在世界中的x坐标
-
-                var position = Tuple4.Point(worldX, worldY, wallZ);  // 这个像素在世界中的坐标
-                var ray = new Ray(rayOrigin, (position - rayOrigin).Normalize());  // 这个像素到视线原点的光线
-
-                List<Intersection> xs = shape.Intersect(ray);
-                Intersection? intersection = Intersection.Hit(xs);
-                if (intersection is not null)
-                {
-                    var hitPoint = ray.Position(intersection.T);
-                    var normal = shape.NormalAt(hitPoint, intersection);
-                    var eyeV = -ray.Direction;
-
-                    var color = World.Lighting(shape.Material, shape, new List<Light>{ light }, hitPoint, eyeV, normal, new List<bool>());
-                    canvas.WritePixel(x, y, color);
-                }
-            }
-        }
-        canvas.SavePng("./light_and_shading_sphere.png");
-    }
+    // public static void LightAndShadingSphere()
+    // {
+    //     // 初始化球
+    //     Sphere shape = new Sphere();
+    //     shape.Material.Color = new Color(1, 0.2, 1);
+    //
+    //     // 初始化光源
+    //     var lightPosition = Tuple4.Point(-10, 10, -10);
+    //     var lightColor = new Color(1, 1, 1);
+    //     var light = new PointLight(lightPosition, lightColor);
+    //     
+    //     // 初始化画布
+    //     int canvasPixels = 500;
+    //     Canvas canvas = new Canvas(canvasPixels, canvasPixels);
+    //     double wallSize = 4;
+    //     double wallZ = 3;
+    //     double pixelSize = wallSize / canvasPixels;
+    //     double half = wallSize / 2;
+    //     
+    //     // 初始化视线原点
+    //     var rayOrigin = Tuple4.Point(0, 0, -5);
+    //
+    //     for (int y = 0; y < canvas.Height; y++)
+    //     {
+    //         double worldY = half - pixelSize * y;  // 计算这个像素在世界中的y坐标
+    //         for (int x = 0; x < canvas.Width; x++)
+    //         {
+    //             double worldX = -half + pixelSize * x;  // 计算这个像素在世界中的x坐标
+    //
+    //             var position = Tuple4.Point(worldX, worldY, wallZ);  // 这个像素在世界中的坐标
+    //             var ray = new Ray(rayOrigin, (position - rayOrigin).Normalize());  // 这个像素到视线原点的光线
+    //
+    //             List<Intersection> xs = shape.Intersect(ray);
+    //             Intersection? intersection = Intersection.Hit(xs);
+    //             if (intersection is not null)
+    //             {
+    //                 var hitPoint = ray.Position(intersection.T);
+    //                 var normal = shape.NormalAt(hitPoint, intersection);
+    //                 var eyeV = -ray.Direction;
+    //
+    //                 var color = World.Lighting(shape.Material, shape, new List<Light>{ light }, hitPoint, eyeV, normal);
+    //                 canvas.WritePixel(x, y, color);
+    //             }
+    //         }
+    //     }
+    //     canvas.SavePng("./light_and_shading_sphere.png");
+    // }
 
     public static void MakingAScene()
     {
@@ -238,7 +240,7 @@ public static class Challenges
             Tuple4.Vector(0, 1, 0));
         camera.Transform = cameraTransform;
         
-        var light1 = new Light(Tuple4.Point(-10, 10, -10), new Color(1, 1, 1));
+        var light1 = new PointLight(Tuple4.Point(-10, 10, -10), new Color(1, 1, 1));
         
         var world = new World(new List<Light> { light1 }, shapes, camera);
         var canvas = world.Render();
@@ -293,7 +295,7 @@ public static class Challenges
         ball6.Material = new Material(color: new Color(1, 0, 0), specular: 0.3);
 
         // 光源
-        var light = new Light(Tuple4.Point(9, 3.5, 0), new Color(1, 1, 1));
+        var light = new PointLight(Tuple4.Point(9, 3.5, 0), new Color(1, 1, 1));
 
         var camera = new Camera(1000, 500, Math.PI / 2.5);
         camera.Transform = Transformations.ViewTransformation(
@@ -311,38 +313,10 @@ public static class Challenges
     
     public static void MakingASceneWithPlane()
     {
-        var pattern = new RadialGradientPattern(new Color(1, 0, 0), new Color(0, 0, 1));
-        pattern.Transform = Transformations.Scaling(0.1, 0.1, 0.1);
         
         // 地面（平面）
         var floor = new Plane();
-        floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0, pattern: pattern);
-        
-        // 中间的墙
-        var middleWall = new Plane();
-        middleWall.Transform = Transformations.Translation(0, 0, 1) *
-                               Transformations.RotationX(-90);
-        middleWall.Material = floor.Material;
-        
-        // 左边的墙
-        var leftWall = new Plane();
-        leftWall.Transform = Transformations.Translation(0, 0, 2) *
-                             Transformations.RotationY(-30) *
-                             Transformations.RotationX(-90);
-        leftWall.Material = floor.Material;
-        
-        // 右边的墙
-        var rightWall = new Plane();
-        rightWall.Transform = Transformations.Translation(0, 0, 2) *
-                              Transformations.RotationY(30) *
-                              Transformations.RotationX(-90);
-        rightWall.Material = floor.Material;
-        
-        // 天花板
-        var ceil = new Plane();
-        ceil.Transform = Transformations.Translation(0, 3, 0) * 
-                         Transformations.RotationX(-180);
-        ceil.Material = floor.Material;
+        floor.Material = new Material(color: new Color(1, 0.9, 0.9), specular: 0);
 
         // 中间的球
         var middle = new Sphere();
@@ -350,8 +324,7 @@ public static class Challenges
         middle.Material = new Material(
             color: new Color(0.1, 1, 0.5),
             diffuse: 0.7,
-            specular: 0.3,
-            pattern: pattern);
+            specular: 0.3);
         
         // 右边的球
         var right = new Sphere();
@@ -372,7 +345,7 @@ public static class Challenges
             specular: 0.3);
         
         // 构建场景
-        var shapes = new List<Shape> { floor, leftWall, middleWall, rightWall, ceil, left, middle, right };
+        var shapes = new List<Shape> { floor, left, middle, right };
         
         var camera = new Camera(1000, 500, Math.PI / 3);
         var cameraTransform = Transformations.ViewTransformation(
@@ -381,7 +354,7 @@ public static class Challenges
             Tuple4.Vector(0, 1, 0));
         camera.Transform = cameraTransform;
         
-        var light1 = new Light(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
+        var light1 = new PointLight(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
         
         var world = new World(new List<Light> { light1 }, shapes, camera);
         var canvas = world.Render();
@@ -434,7 +407,7 @@ public static class Challenges
             Tuple4.Vector(0, 1, 0));
         camera.Transform = cameraTransform;
         
-        var light1 = new Light(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
+        var light1 = new PointLight(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
         
         var world = new World(new List<Light> { light1 }, shapes, camera);
         var canvas = world.Render();
@@ -487,7 +460,7 @@ public static class Challenges
             Tuple4.Vector(0, 1, 0));
         camera.Transform = cameraTransform;
         
-        var light1 = new Light(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
+        var light1 = new PointLight(Tuple4.Point(-3, 2, -5), new Color(1, 1, 1));
         
         var world = new World(new List<Light> { light1 }, shapes, camera);
         var canvas = world.Render();
@@ -570,7 +543,7 @@ public static class Challenges
             Tuple4.Vector(0, 1, 0));
         camera.Transform = cameraTransform;
         
-        var light = new Light(Tuple4.Point(10, 10, 5), new Color(1, 1, 1));
+        var light = new PointLight(Tuple4.Point(10, 10, 5), new Color(1, 1, 1));
         
         var world = new World(
             new List<Light> { light }, 
@@ -593,10 +566,10 @@ public static class Challenges
             Tuple4.Vector(-0.45, 1, 0));
         
         // 光源
-        var light1 = new Light(
+        var light1 = new PointLight(
             Tuple4.Point(50, 100, -50),
             new Color(1, 1, 1));
-        var light2 = new Light(
+        var light2 = new PointLight(
             Tuple4.Point(-400, 50, -10),
             new Color(0.2, 0.2, 0.2));
         var lights = new List<Light> { light1, light2 };
@@ -740,55 +713,6 @@ public static class Challenges
         canvas.SavePng("./cover_with_anti_alias.png");
     }
 
-    public static void IceCream()
-    {
-        var camera = new Camera(800, 400, Math.PI / 3);
-        camera.Transform = Transformations.ViewTransformation(
-            Tuple4.Point(0, 2.2, -6), 
-            Tuple4.Point(0, 1, 0), 
-            Tuple4.Vector(0, 1, 0));
-
-        var floor = new Plane();
-        floor.Material.Color = new Color(0.9, 0.9, 0.9);
-
-        var wall = new Plane();
-        wall.Transform = Transformations.Translation(0, 0, 5) *
-                         Transformations.RotationX(90);
-        wall.Material.Color = new Color(0.85, 0.87, 0.9);
-
-        var cone = new Cone();
-        cone.Transform = Transformations.RotationZ(-20) *
-                         Transformations.Scaling(0.3, 1, 0.3);
-        cone.Minimum = 0;
-        cone.Maximum = 1;
-        cone.Closed = true;
-        cone.Material.Color = new Color(0.89, 0.76, 0.76);
-
-        var ball1 = new Sphere();
-        ball1.Transform = Transformations.Translation(0.4, 1.07, 0) *
-                          Transformations.Scaling(0.35, 0.35, 0.35);
-                          
-        ball1.Material.Color = new Color(1, 0.35, 0.35);
-
-        var ball2 = new Sphere();
-        ball2.Transform = Transformations.Translation(0.5, 1.45, 0) *
-                          Transformations.Scaling(0.25, 0.25, 0.25);
-        
-        ball2.Material.Color = new Color(0.34, 1, 0.5);
-
-        var shapes = new List<Shape>
-        {
-            floor, wall, cone, ball1, ball2
-        };
-        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
-
-        var world = new World(lights, shapes, camera);
-        var canvas = world.Render();
-        canvas.SavePng("./ice_cream.png");
-
-    }
-
-
     private static Sphere HexagonCorner()
     {
         var corner = new Sphere();
@@ -852,7 +776,12 @@ public static class Challenges
         {
             floor, hexagon
         };
-        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+        var light = new AreaLight(
+            Tuple4.Point(-6, 8, -6), new Color(1, 1, 1),
+            Tuple4.Vector(0, 2, 0), 4,
+            Tuple4.Vector(2, 0, 0), 4);
+        
+        var lights = new List<Light> { light };
 
         var world = new World(lights, shapes, camera);
         var canvas = world.Render();
@@ -863,7 +792,7 @@ public static class Challenges
     {
         var camera = new Camera(500, 500, Math.PI / 3);
         camera.Transform = Transformations.ViewTransformation(
-            Tuple4.Point(0, 2.2, -6), 
+            Tuple4.Point(0, 3, -8), 
             Tuple4.Point(0, 1, 0), 
             Tuple4.Vector(0, 1, 0));
         
@@ -878,7 +807,12 @@ public static class Challenges
             floor, teaPot
         };
         
-        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+        var light = new AreaLight(
+            Tuple4.Point(-6, 8, -6), new Color(1, 1, 1),
+            Tuple4.Vector(0, 2, 0), 2,
+            Tuple4.Vector(2, 0, 0), 2);
+        
+        var lights = new List<Light> { light };
 
         var world = new World(lights, shapes, camera);
         var canvas = world.Render();
@@ -904,7 +838,7 @@ public static class Challenges
             floor, cup
         };
         
-        var lights = new List<Light> { new Light(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
+        var lights = new List<Light> { new PointLight(Tuple4.Point(-6, 8, -6), new Color(1, 1, 1)) };
         
         var world = new World(lights, shapes, camera);
         var canvas = world.Render();

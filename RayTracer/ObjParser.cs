@@ -19,13 +19,14 @@ public class ObjParser
     /// <param name="filePath"></param>
     public ObjParser(string filePath)
     {
+        // face 的 index 是从1开始的所以第0位要加一个占位点和一个占位法向量
         Vertices.Add(Tuple4.Point(0, 0, 0));
-        Normals.Add(Tuple4.Point(0, 0, 0));
+        Normals.Add(Tuple4.Vector(0, 0, 0));
         _current = RootGroup;
         
         foreach (var line in File.ReadLines(filePath))
         {
-            var parts = line.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            var parts = line.Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0)
             {
                 IgnoredLines++;
@@ -83,9 +84,17 @@ public class ObjParser
             var (v2, n2) = Ref(p[i]);
             var (v3, n3) = Ref(p[i + 1]);
 
-            Shape tri = (n1 > 0 && n2 > 0 && n3 > 0)
-                ? new SmoothTriangle(Vertices[v1], Vertices[v2], Vertices[v3], Normals[n1],  Normals[n2],  Normals[n3])
-                : new Triangle(Vertices[v1], Vertices[v2], Vertices[v3]);
+            Shape tri;
+
+            if (n1 > 0 && n2 > 0 && n3 > 0)
+            {
+                tri = new SmoothTriangle(Vertices[v1], Vertices[v2], Vertices[v3],
+                    Normals[n1], Normals[n2], Normals[n3]);
+            }
+            else
+            {
+                tri = new Triangle(Vertices[v1], Vertices[v2], Vertices[v3]);
+            }
 
             _current.AddChild(tri);
         }
@@ -95,7 +104,17 @@ public class ObjParser
     {
         var seg = token.Split('/');
         int v = int.Parse(seg[0]);
-        int n = (seg.Length >= 3 && seg[2] != "") ? int.Parse(seg[2]) : 0;
+
+        int n;
+        if (seg.Length >= 3 && seg[2] != "")
+        {
+            n = int.Parse(seg[2]);
+        }
+        else
+        {
+            n = 0;
+        }
+        
         return (v, n);
     }
 }
